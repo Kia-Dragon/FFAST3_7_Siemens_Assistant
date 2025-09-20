@@ -100,7 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.plcList,
             self.chkComments,
             self.chkRetentive,
-            self.chkAddress
+            self.chkAddress,
         ]:
             layout.addWidget(w)
 
@@ -299,14 +299,17 @@ class MainWindow(QtWidgets.QMainWindow):
         extr = TagExtractor(self._session)
         rows = list(extr.extract_tags(selected))
         if not rows:
-            QtWidgets.QMessageBox.information(self, "Export", "No tags found to export.")
+            QtWidgets.QMessageBox.information(
+                self, "Export", "No tags found to export."
+            )
             return
 
         fmt = self.cmbExportFormat.currentData()
 
         if fmt == "xlsx":
             out, _ = QtWidgets.QFileDialog.getSaveFileName(
-                self, "Save Excel", "PLC_Tags.xlsx", "Excel (*.xlsx)")
+                self, "Save Excel", "PLC_Tags.xlsx", "Excel (*.xlsx)"
+            )
             if not out:
                 return
             out_path = Path(out)
@@ -320,7 +323,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if fmt == "csv":
             out, _ = QtWidgets.QFileDialog.getSaveFileName(
-                self, "Save CSV", "PLC_Tags.csv", "CSV (*.csv)")
+                self, "Save CSV", "PLC_Tags.csv", "CSV (*.csv)"
+            )
             if not out:
                 return
             out_path = Path(out)
@@ -335,18 +339,27 @@ class MainWindow(QtWidgets.QMainWindow):
         creds_path = self._google_credentials_path
         if not creds_path or not Path(creds_path).exists():
             picked, _ = QtWidgets.QFileDialog.getOpenFileName(
-                self, "Google service account credentials", str(Path.home()), "JSON (*.json)")
+                self,
+                "Google service account credentials",
+                str(Path.home()),
+                "JSON (*.json)",
+            )
             if not picked:
                 return
             creds_path = Path(picked)
             self._google_credentials_path = creds_path
 
         title, ok = QtWidgets.QInputDialog.getText(
-            self, "Google Sheets", "Spreadsheet title:", text="PLC Tags")
+            self, "Google Sheets", "Spreadsheet title:", text="PLC Tags"
+        )
         if not ok or not title.strip():
             return
         share_email, ok = QtWidgets.QInputDialog.getText(
-            self, "Google Sheets", "Share with email (optional):", text=self._google_share_email)
+            self,
+            "Google Sheets",
+            "Share with email (optional):",
+            text=self._google_share_email,
+        )
         if not ok:
             return
         share_email = share_email.strip()
@@ -354,22 +367,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         try:
             info = write_tags_google_sheets(
-                rows, creds_path, title.strip(), share_with=share_email or None)
+                rows, creds_path, title.strip(), share_with=share_email or None
+            )
         except RuntimeError as err:
             QtWidgets.QMessageBox.critical(self, "Google Sheets", str(err))
             return
         except Exception as err:
             QtWidgets.QMessageBox.critical(
-                self, "Google Sheets", f"Failed to export to Google Sheets:\\n{err}")
+                self, "Google Sheets", f"Failed to export to Google Sheets:\\n{err}"
+            )
             return
 
         url = info.get("url", "") if isinstance(info, dict) else ""
         message = (
-            f"Exported {len(rows)} rows to Google Sheets:\n{url}" if url else
-            f"Exported {len(rows)} rows to Google Sheets."
+            f"Exported {len(rows)} rows to Google Sheets:\n{url}"
+            if url
+            else f"Exported {len(rows)} rows to Google Sheets."
         )
         if not share_email:
             message += "\n(Note: spreadsheet remains owned by the service account.)"
         self.log.append(message)
         QtWidgets.QMessageBox.information(self, "Done", message)
-
