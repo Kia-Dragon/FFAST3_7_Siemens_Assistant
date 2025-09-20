@@ -46,6 +46,16 @@ def _discover_dirs(public_api_dir: str | None):
     bin_dir  = portal_root / "bin"
     bin64_dir = portal_root / "bin64"
     dirs = [public_dir, bin_dir, bin64_dir, portal_root]
+    # Include sibling PublicAPI folders (e.g., V16, V15.1) for mixed installs
+    try:
+        for sibling in public_dir.parent.iterdir():
+            if sibling == public_dir:
+                continue
+            name_lower = sibling.name.lower()
+            if sibling.is_dir() and "publicapi" in name_lower:
+                dirs.append(sibling)
+    except Exception:
+        pass
     for c in _CULTURES:
         cd = public_dir / c
         if cd.is_dir():

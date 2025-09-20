@@ -60,6 +60,7 @@ class Candidate:
     quality: str = "heuristic"  # "exact" | "v17-path" | "good" | "heuristic"
     last_write: Optional[str] = None
     missing: list[str] = field(default_factory=list)
+    note: Optional[str] = None
 
 
 def validate_candidate(c: Candidate) -> Candidate:

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from ..discovery import discover_candidates, fixed_drives
-from ..validation import Candidate, REQUIRED_DLLS
+from ..validation import Candidate, REQUIRED_DLLS, validate_candidate, assess_quality
 from ..config_store import ProfileStore
 from ..settings import DllProfile
 from ..openness_bridge import ensure_clr_and_load
@@ -335,7 +335,11 @@ class DllWizard(QtWidgets.QDialog):
 
         self.table.setItem(r, 4, QtWidgets.QTableWidgetItem(cand.last_write or ""))
 
-        self.table.setItem(r, 5, QtWidgets.QTableWidgetItem("Yes" if cand.is_valid else f"No ({cand.reason})"))
+        if cand.is_valid:
+            valid_text = "Yes" if not cand.note else f"Yes ({cand.note})"
+        else:
+            valid_text = f"No ({cand.reason})"
+        self.table.setItem(r, 5, QtWidgets.QTableWidgetItem(valid_text))
 
 
         self.candidates.append(cand)
@@ -357,8 +361,18 @@ class DllWizard(QtWidgets.QDialog):
         self.worker = None
 
         if not self.valid_candidates:
-            self._show_missing_summary()
-            return
+            multi = self._build_multidir_candidate()
+            if multi:
+                self.on_found(multi)
+                row = self.table.rowCount() - 1
+                if row >= 0:
+                    self.table.selectRow(row)
+                    item = self.table.item(row, 0)
+                    if item is not None:
+                        self.table.scrollToItem(item, QtWidgets.QAbstractItemView.PositionAtCenter)
+            else:
+                self._show_missing_summary()
+                return
 
         # Rank all valid candidates
         ranked = sorted(
@@ -377,6 +391,81 @@ class DllWizard(QtWidgets.QDialog):
             # Do not auto-close; user may want to review. They can just press Close now.
 
         # Else: keep results; user can double-click row or use Select Highlighted
+
+    def _portal_root(self, path: Path) -> Path:
+        parts = list(path.parts)
+        lowers = [p.lower() for p in parts]
+        for i in range(len(parts) - 1, -1, -1):
+            if 'portal' in lowers[i]:
+                try:
+                    return Path(*parts[: i + 1])
+                except TypeError:
+                    break
+        return path.parent
+
+    def _score_path_option(self, dll_name: str, path: Path, preferred_root: Path | None) -> tuple[int, float]:
+        lower = str(path).replace('\\', '/').lower()
+        score = 0
+        if preferred_root and self._portal_root(path) == preferred_root:
+            score += 9
+        if 'portal' in lower:
+            score += 7
+        if 'publicapi' in lower:
+            score += 6
+        if 'v17' in lower:
+            score += 10
+        elif 'v16' in lower:
+            score += 6
+        elif 'v15' in lower:
+            score += 3
+        if dll_name.lower().endswith('engineering.dll'):
+            qual = assess_quality(path)
+            score += {'exact': 20, 'v17-path': 12, 'good': 6}.get(qual, 0)
+        if dll_name.lower().endswith('addin.dll') and 'addin' in lower:
+            score += 2
+        if dll_name.lower().endswith('hmi.dll') and 'hmi' in lower:
+            score += 2
+        try:
+            mtime = path.stat().st_mtime
+        except Exception:
+            mtime = 0.0
+        return score, mtime
+
+    def _build_multidir_candidate(self) -> Candidate | None:
+        if not getattr(self, 'found_dlls', None):
+            return None
+        resolved: dict[str, list[Path]] = {}
+        for name in REQUIRED_DLLS:
+            entries = [Path(p) for p in self.found_dlls.get(name, [])]
+            entries = [p for p in entries if p.exists()]
+            if not entries:
+                return None
+            resolved[name] = entries
+
+        def pick(paths: list[Path], name: str, root_hint: Path | None) -> Path:
+            scored = sorted(paths, key=lambda p: self._score_path_option(name, p, root_hint))
+            return scored[-1]
+
+        eng_paths = resolved.get('Siemens.Engineering.dll')
+        if not eng_paths:
+            return None
+        best_eng = pick(eng_paths, 'Siemens.Engineering.dll', None)
+        root_hint = self._portal_root(best_eng)
+        best_hmi = pick(resolved['Siemens.Engineering.Hmi.dll'], 'Siemens.Engineering.Hmi.dll', root_hint)
+        best_addin = pick(resolved['Siemens.Engineering.AddIn.dll'], 'Siemens.Engineering.AddIn.dll', root_hint)
+
+        cand = Candidate(
+            folder=best_eng.parent,
+            engineering_dll=best_eng,
+            hmi_dll=best_hmi,
+            addin_dll=best_addin,
+            note='multi-folder (auto)'
+        )
+        cand = validate_candidate(cand)
+        if not cand.is_valid:
+            return None
+        cand.quality = f"{cand.quality}+multi" if cand.quality else 'multi'
+        return cand
 
     def _show_missing_summary(self) -> None:
         missing = [name for name in REQUIRED_DLLS if not self.found_dlls.get(name)]
