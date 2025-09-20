@@ -1,9 +1,7 @@
 ﻿from __future__ import annotations
 
 from pathlib import Path
-from typing import List
-
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtGui, QtWidgets
 
 from ..config_store import ProfileStore
 from ..excel_writer import write_tags_csv, write_tags_google_sheets, write_tags_xlsx
@@ -36,12 +34,13 @@ class MainWindow(QtWidgets.QMainWindow):
         layout = QtWidgets.QVBoxLayout(central)
 
         app = QtWidgets.QApplication.instance()
+        qt_app = app if isinstance(app, QtWidgets.QApplication) else None
 
-        self._original_palette = QtGui.QPalette(app.palette()) if app else None
+        self._original_palette = QtGui.QPalette(qt_app.palette()) if qt_app else None
 
-        self._original_style_sheet = app.styleSheet() if app else ""
+        self._original_style_sheet = qt_app.styleSheet() if qt_app else ""
 
-        self._original_style_name = app.style().objectName() if app else None
+        self._original_style_name = qt_app.style().objectName() if qt_app else None
 
         self._dark_mode = True
 
@@ -63,7 +62,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.plcList = QtWidgets.QListWidget()
 
-        self.plcList.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        self.plcList.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.MultiSelection)
 
         self.chkComments = QtWidgets.QCheckBox("Include Comments")
         self.chkComments.setChecked(True)
@@ -129,33 +128,33 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _apply_theme(self, dark: bool) -> None:
         app = QtWidgets.QApplication.instance()
-        if app is None:
+        if not isinstance(app, QtWidgets.QApplication):
             return
         self._dark_mode = dark
         if dark:
             QtWidgets.QApplication.setStyle("Fusion")
             palette = QtGui.QPalette()
-            palette.setColor(QtGui.QPalette.Window, QtGui.QColor(53, 53, 53))
-            palette.setColor(QtGui.QPalette.WindowText, QtCore.Qt.white)
-            palette.setColor(QtGui.QPalette.Base, QtGui.QColor(35, 35, 35))
-            palette.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(53, 53, 53))
-            palette.setColor(QtGui.QPalette.ToolTipBase, QtGui.QColor(53, 53, 53))
-            palette.setColor(QtGui.QPalette.ToolTipText, QtCore.Qt.white)
-            palette.setColor(QtGui.QPalette.Text, QtCore.Qt.white)
-            palette.setColor(QtGui.QPalette.Button, QtGui.QColor(53, 53, 53))
-            palette.setColor(QtGui.QPalette.ButtonText, QtCore.Qt.white)
-            palette.setColor(QtGui.QPalette.BrightText, QtCore.Qt.red)
-            palette.setColor(QtGui.QPalette.Link, QtGui.QColor(90, 160, 255))
-            palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
-            palette.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
+            palette.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor(53, 53, 53))
+            palette.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColorConstants.White)
+            palette.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(35, 35, 35))
+            palette.setColor(QtGui.QPalette.ColorRole.AlternateBase, QtGui.QColor(53, 53, 53))
+            palette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor(53, 53, 53))
+            palette.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColorConstants.White)
+            palette.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColorConstants.White)
+            palette.setColor(QtGui.QPalette.ColorRole.Button, QtGui.QColor(53, 53, 53))
+            palette.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColorConstants.White)
+            palette.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColorConstants.Red)
+            palette.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(90, 160, 255))
+            palette.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(42, 130, 218))
+            palette.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtGui.QColorConstants.Black)
             palette.setColor(
-                QtGui.QPalette.Disabled,
-                QtGui.QPalette.Text,
+                QtGui.QPalette.ColorGroup.Disabled,
+                QtGui.QPalette.ColorRole.Text,
                 QtGui.QColor(120, 120, 120),
             )
             palette.setColor(
-                QtGui.QPalette.Disabled,
-                QtGui.QPalette.ButtonText,
+                QtGui.QPalette.ColorGroup.Disabled,
+                QtGui.QPalette.ColorRole.ButtonText,
                 QtGui.QColor(120, 120, 120),
             )
             app.setPalette(palette)
