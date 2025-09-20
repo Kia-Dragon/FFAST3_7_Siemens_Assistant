@@ -1,14 +1,28 @@
 ﻿from __future__ import annotations
 
 from pathlib import Path
+import sys
+
 from PySide6 import QtGui, QtWidgets
 
-from ..config_store import ProfileStore
-from ..excel_writer import write_tags_csv, write_tags_google_sheets, write_tags_xlsx
-from ..openness_bridge import ensure_clr_and_load
-from ..session import TiaSession
-from ..settings import DllProfile
-from ..tag_extractor import TagExtractor
+if __package__:
+    from ..config_store import ProfileStore
+    from ..excel_writer import write_tags_csv, write_tags_google_sheets, write_tags_xlsx
+    from ..openness_bridge import ensure_clr_and_load
+    from ..session import TiaSession
+    from ..settings import DllProfile
+    from ..tag_extractor import TagExtractor
+else:
+    package_root = Path(__file__).resolve().parents[2]
+    root_str = str(package_root)
+    if root_str not in sys.path:
+        sys.path.insert(0, root_str)
+    from tia_tags_exporter.config_store import ProfileStore
+    from tia_tags_exporter.excel_writer import write_tags_csv, write_tags_google_sheets, write_tags_xlsx
+    from tia_tags_exporter.openness_bridge import ensure_clr_and_load
+    from tia_tags_exporter.session import TiaSession
+    from tia_tags_exporter.settings import DllProfile
+    from tia_tags_exporter.tag_extractor import TagExtractor
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -174,7 +188,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def on_wizard(self):
 
-        from .wizard import DllWizard
+        if __package__:
+            from .wizard import DllWizard
+        else:
+            from tia_tags_exporter.gui.wizard import DllWizard
 
         wiz = DllWizard(self.store, self)
 
@@ -387,3 +404,27 @@ class MainWindow(QtWidgets.QMainWindow):
             message += "\n(Note: spreadsheet remains owned by the service account.)"
         self.log.append(message)
         QtWidgets.QMessageBox.information(self, "Done", message)
+
+if __name__ == "__main__":
+    import os
+    from tia_tags_exporter.loader_multi import prepare_and_load
+    from tia_tags_exporter.logging_utils import configure_logging
+
+    configure_logging()
+    store = ProfileStore(Path.home() / ".tia-tags-exporter")
+    public_api_dir = None
+    prof = store.get_profile("V17")
+    if prof and getattr(prof, "public_api_dir", None):
+        public_api_dir = str(prof.public_api_dir)
+    try:
+        diag = prepare_and_load(public_api_dir)
+        os.environ["TIA_TAGS_EXPORTER_LOADER_READY"] = "1"
+        if diag is not None:
+            os.environ["TIA_TAGS_EXPORTER_LOADER_INFO"] = str(diag)
+    except Exception:
+        pass
+
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv or ["tia-tags-exporter"])
+    window = MainWindow(store)
+    window.show()
+    sys.exit(app.exec())
