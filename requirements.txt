@@ -1,0 +1,4 @@
+
+pythonnet>=3.0.2; platform_system=="Windows"
+PySide6>=6.6; platform_system=="Windows"
+openpyxl>=3.1

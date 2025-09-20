@@ -1,0 +1,333 @@
+﻿from __future__ import annotations
+from PySide6 import QtCore, QtWidgets
+from pathlib import Path
+from typing import List, Optional
+
+from ..discovery import discover_candidates, fixed_drives
+from ..validation import Candidate
+from ..config_store import ProfileStore
+from ..settings import DllProfile
+from ..openness_bridge import ensure_clr_and_load
+
+
+class DiscoveryWorker(QtCore.QThread):
+    progress = QtCore.Signal(str)
+    found = QtCore.Signal(object)
+    finished = QtCore.Signal()
+
+    def __init__(self, selected_drives: List[Path], parent=None):
+        super().__init__(parent)
+        self.selected_drives = selected_drives
+        self._abort = False
+
+    def run(self):
+
+        # Full-depth candidate enumeration
+
+        try:
+
+            for cand in discover_candidates(self.selected_drives):
+
+                if self._abort:
+
+                    break
+
+                self.progress.emit(f"Found {cand.engineering_dll} valid={cand.is_valid} reason={cand.reason}")
+
+                self.found.emit(cand)
+
+        finally:
+
+            # Always emit once when scanning has fully ended (or aborted)
+
+            self.finished.emit()
+
+    def abort(self):
+        self._abort = True
+
+
+def _score_candidate(c: Candidate) -> int:
+    """Scoring for auto-pick/preselect."""
+    base = {"exact": 100, "v17-path": 75, "good": 50, "heuristic": 25}.get(c.quality or "heuristic", 25)
+    p = str(c.folder).lower().replace("/", "\\")
+    bonus = 0
+    if p.endswith("\\publicapi\\v17"):
+        bonus += 15
+    if "portal v17" in p:
+        bonus += 10
+    if "publicapi" in p:
+        bonus += 5
+    if "automation" in p and "portal" in p:
+        bonus += 5
+    if c.token:
+        bonus += 3
+    if c.version:
+        bonus += 1
+    return base + bonus
+
+
+class DllWizard(QtWidgets.QDialog):
+    """
+    Improvements:
+      - Indeterminate progress bar + heartbeat dots during scanning.
+      - Columns are draggable; 'Fit Columns' button.
+      - Auto-save selection on: auto-pick, Select Highlighted, row double-click, or Close with a valid row highlighted.
+      - Main results table shows full details; chooser pre-selects best.
+    """
+
+    def __init__(self, store: ProfileStore, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("DLL Discovery & Configuration Wizard (V17)")
+        self.resize(1200, 760)
+        self.store = store
+
+        # --- Drives selection ---
+        self.driveGroup = QtWidgets.QGroupBox("Select drives to scan (full depth):")
+        driveLayout = QtWidgets.QHBoxLayout(self.driveGroup)
+        self.driveChecks: List[QtWidgets.QCheckBox] = []
+        for d in fixed_drives():
+            cb = QtWidgets.QCheckBox(str(d))
+            cb.setChecked(True)
+            self.driveChecks.append(cb)
+            driveLayout.addWidget(cb)
+        driveLayout.addStretch(1)
+
+        # --- Busy indicators ---
+        busyRow = QtWidgets.QHBoxLayout()
+        self.prog = QtWidgets.QProgressBar()
+        self.prog.setTextVisible(False)
+        self.prog.setRange(0, 1)  # idle state
+        self.heartbeat = QtWidgets.QLabel("")  # animated dots while scanning
+        busyRow.addWidget(self.prog, 3)
+        busyRow.addWidget(self.heartbeat, 1)
+
+        # Heartbeat timer
+        self._hb_timer = QtCore.QTimer(self)
+        self._hb_timer.setInterval(300)
+        self._hb_state = 0
+        self._hb_timer.timeout.connect(self._tick_heartbeat)
+
+        # --- Results table ---
+        self.table = QtWidgets.QTableWidget(0, 6)
+        self.table.setHorizontalHeaderLabels(
+            ["Folder (full path)", "FileVersion", "Token", "Quality", "LastWrite", "Valid"]
+        )
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QtWidgets.QHeaderView.Interactive)  # draggable columns
+        header.setStretchLastSection(False)
+        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # Double-click = save & close
+        self.table.itemDoubleClicked.connect(self._save_current_and_close)
+
+        # --- Buttons & status ---
+        self.btnScan   = QtWidgets.QPushButton("Rescan")
+        self.btnAbort  = QtWidgets.QPushButton("Abort")
+        self.btnSelect = QtWidgets.QPushButton("Select Highlighted")
+        self.btnFit    = QtWidgets.QPushButton("Fit Columns")
+        self.btnClose  = QtWidgets.QPushButton("Close")
+
+        self.btnScan.clicked.connect(self.on_scan)
+        self.btnAbort.clicked.connect(self.on_abort)
+        self.btnSelect.clicked.connect(self.on_select)
+        self.btnFit.clicked.connect(self.on_fit_columns)
+        self.btnClose.clicked.connect(self.close)
+
+        self.status = QtWidgets.QLabel("Profile: not saved")
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(self.driveGroup)
+        layout.addLayout(busyRow)
+        layout.addWidget(self.table)
+        layout.addWidget(self.status)
+        row = QtWidgets.QHBoxLayout()
+        for b in (self.btnScan, self.btnAbort, self.btnSelect, self.btnFit, self.btnClose):
+            row.addWidget(b)
+        layout.addLayout(row)
+
+        # State
+        self.worker: Optional[DiscoveryWorker] = None
+        self.candidates: List[Candidate] = []
+        self.valid_candidates: List[Candidate] = []
+        self._profile_saved = False
+
+        # Auto-start after the dialog is shown
+        QtCore.QTimer.singleShot(0, self.on_scan)
+
+    # ---- Busy/heartbeat ----
+
+    def _tick_heartbeat(self):
+        dots = "." * (1 + (self._hb_state % 3))
+        self._hb_state += 1
+        self.heartbeat.setText(f"Scanning{dots}")
+
+    def _busy(self, on: bool):
+        if on:
+            self.prog.setRange(0, 0)  # indeterminate
+            self._hb_state = 0
+            self._hb_timer.start()
+        else:
+            self.prog.setRange(0, 1)  # idle
+            self.heartbeat.clear()
+            self._hb_timer.stop()
+
+    # ---- Actions ----
+
+    def _selected_drives(self) -> List[Path]:
+        sel = [Path(cb.text()) for cb in self.driveChecks if cb.isChecked()]
+        if not sel:
+            QtWidgets.QMessageBox.warning(self, "Drives", "Select at least one drive to scan.")
+        return sel
+
+    def on_scan(self):
+        drives = self._selected_drives()
+        if not drives:
+            return
+
+        if self.worker:
+            self.worker.abort()
+            self.worker.wait(100)
+
+        self.candidates.clear()
+        self.valid_candidates.clear()
+        self.table.setRowCount(0)
+        self.status.setText("Profile: not saved")
+        self._profile_saved = False
+        self._busy(True)
+
+        self.worker = DiscoveryWorker(drives)
+        self.worker.progress.connect(lambda msg: None)  # logs are optional now
+        self.worker.found.connect(self.on_found)
+        self.worker.finished.connect(self.on_finished)
+        self.worker.start()
+
+    def on_abort(self):
+
+        if self.worker:
+
+            self.worker.abort()
+
+            self.worker.wait(2000)
+        self.worker.wait(2000)            self._busy(False)
+
+    def on_fit_columns(self):
+        self.table.resizeColumnsToContents()
+
+    def _save_profile(self, cand: Candidate):
+        """Persist without closing the dialog."""
+        token = cand.token
+        if not token:
+            res = ensure_clr_and_load(cand.engineering_dll)
+            token = res.token if res.ok else None
+
+        prof = DllProfile(
+            tia_version="V17",
+            public_api_dir=cand.folder,
+            file_version=cand.version,
+            public_key_token=token,
+        )
+        self.store.set_profile(prof)
+        self._profile_saved = True
+        self.status.setText(f"Profile saved: {cand.folder}")
+
+    def _save_current_and_close(self, *_):
+        cand = self._current_valid_candidate()
+        if cand:
+            self._save_profile(cand)
+            self.accept()
+
+    def on_select(self):
+
+        cand = self._current_valid_candidate()
+
+        if not cand:
+
+            r = self.table.currentRow()
+
+            if r >= 0:
+
+                item0 = self.table.item(r, 0)
+
+                if item0 is not None:
+
+                    cand = item0.data(QtCore.Qt.UserRole)
+
+        if not cand:
+
+            QtWidgets.QMessageBox.warning(self, "Select", "Select a valid candidate row first.")
+
+            return
+
+        # Save & close
+
+        _ = self._save_profile(cand)
+
+        self.accept()
+
+    def _current_valid_candidate(self) -> Optional[Candidate]:
+        r = self.table.currentRow()
+        if r < 0:
+            return None
+        folder = Path(self.table.item(r, 0).text())
+        cand = next((c for c in self.valid_candidates if str(c.folder) == str(folder)), None)
+        return cand
+
+    def on_found(self, cand: Candidate):
+        # Fetch token via reflection (best-effort) for display & scoring
+        token = ""
+        if cand.is_valid:
+            res = ensure_clr_and_load(cand.engineering_dll)
+            if res.ok:
+                token = res.token or ""
+            cand.token = token
+
+        r = self.table.rowCount()
+        self.table.insertRow(r)
+        item0 = QtWidgets.QTableWidgetItem()
+item0.setData(QtCore.Qt.UserRole, cand)
+self.table.setItem(r, 0, item0))
+        self.table.setItem(r, 1, QtWidgets.QTableWidgetItem(cand.version or ""))
+        self.table.setItem(r, 2, QtWidgets.QTableWidgetItem(token))
+        self.table.setItem(r, 3, QtWidgets.QTableWidgetItem(cand.quality))
+        self.table.setItem(r, 4, QtWidgets.QTableWidgetItem(cand.last_write or ""))
+        self.table.setItem(r, 5, QtWidgets.QTableWidgetItem("Yes" if cand.is_valid else f"No ({cand.reason})"))
+
+        self.candidates.append(cand)
+        if cand.is_valid:
+            self.valid_candidates.append(cand)
+
+    def on_finished(self):
+        self._busy(False)
+        if not self.valid_candidates:
+            QtWidgets.QMessageBox.information(self, "Discovery", "No Siemens.Engineering.dll found on the selected drives.")
+            return
+
+        # Rank all valid candidates
+        ranked = sorted(
+            self.valid_candidates,
+            key=lambda c: (_score_candidate(c), c.last_write or "", str(c.folder)),
+            reverse=True
+        )
+
+        best = ranked[0]
+        best_score = _score_candidate(best)
+        second_score = _score_candidate(ranked[1]) if len(ranked) > 1 else -1
+
+        # Auto-save only if unambiguous best; keep dialog open for visibility
+        if len(ranked) == 1 or best_score > second_score:
+            self._save_profile(best)
+            # Do not auto-close; user may want to review. They can just press Close now.
+
+        # Else: keep results; user can double-click row or use Select Highlighted
+
+    # ---- Close behavior ----
+
+    def closeEvent(self, event):
+        # If user closes without having saved, but a valid row is selected, save it now.
+        if not self._profile_saved:
+            cand = self._current_valid_candidate()
+            if cand:
+                self._save_profile(cand)
+        super().closeEvent(event)
+
+

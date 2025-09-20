@@ -1,0 +1,180 @@
+
+1) Goal (unchanged, scope: Tags only)
+Export all PLC Tag Tables (tag name, datatype, address if present, comment, retentive flag) from a running TIA Portal V17 project into a single Excel workbook for LLM ingestion—via the Openness API (PlcTagTable, TagTables). [Starting t...PI for ...], [Openness:...- Siemens]
+
+2) DLL Discovery & Configuration Wizard (updated per your rules)
+We’ll build a robust wizard that searches the entire machine for the required Openness assemblies and configures the app to load them using Siemens’ recommended binding approach. Siemens documents that the Openness assemblies (e.g., Siemens.Engineering.dll) are shipped with TIA Portal and are typically found under ...Portal V*\PublicAPI\V*. [What's new...- Siemens], [TIA Portal...workflows]
+2.1 What we need for this MVP
+
+Mandatory: Siemens.Engineering.dll (Openness core).
+Target version: V17 assemblies to align with your TIA environment and object model. (Siemens explains versioned DLLs live under PublicAPI\[version].) [What's new...- Siemens]
+
+2.2 Search strategy (with your revisions)
+We will scan the entire hard drive if necessary—no depth limits and no throttling. The flow:
+
+
+Stage 1 (Priority roots)
+Find directories whose path contains siemens (case‑insensitive)—e.g., C:\Program Files\Siemens\, C:\ProgramData\Siemens\, D:\...\Siemens\—and recursively scan all subdirectories beneath them first.
+
+
+Stage 2 (Known patterns)
+Within any Siemens paths, probe common TIA locations for V17:
+...\Automation\Portal V17\PublicAPI\V17\ (or similar subtrees). [What's new...- Siemens]
+
+
+Stage 3 (Exhaustive full‑drive scan)
+If still unresolved, perform a full recursive file‑name search for Siemens.Engineering.dll across all fixed drives and all directories. (User can still Abort at any time; see controls below.)
+
+
+
+Decision applied: full‑drive, full‑depth search is allowed and will run until completion unless the user aborts.
+
+2.3 Feedback & controls
+
+Real‑time progress:
+
+“Scanning drive C:\ …”, “Scanning directory …\Siemens\…”, “Found Siemens.Engineering.dll (17.0.x.x)”
+Counters: Drives scanned, directories scanned, candidates found, valid V17 sets found
+
+
+Controls:
+
+Abort—stops immediately and returns to Wizard home (offer Manual Browse or Exit).
+Manual Browse—user can point to a suspected PublicAPI\V17 folder directly.
+Priority directories (pre‑selection)—before scanning, user may list specific directories to scan first (e.g., a custom install on E:\Tools\Siemens), but all fixed drives are still scanned by default if needed (see Decisions).
+
+
+
+2.4 Validation (accept/reject rules)
+For each candidate folder:
+
+Presence: Siemens.Engineering.dll exists.
+Version: file version is V17 (or matches your selected target profile). [What's new...- Siemens]
+Strong‑name token: PublicKeyToken matches Siemens (documentation shows token like d29ec89bac048f84). [Connecting...ion of ...]
+Loadability: lightweight reflection/isolate load test (no side‑effects).
+Consistency: prefer assemblies coming from the same PublicAPI\V17 directory.
+
+2.5 Selection policy
+If multiple valid V17 sets are found:
+
+Always prompt the user to choose (show path, file version, last modified, token).
+Persist the chosen path as the V17 profile.
+
+
+Decision applied: Always prompt—no auto‑select, even if one is under Program Files.
+
+2.6 Binding strategy (post‑discovery)
+
+Write an app configuration entry mapping the strong‑named Siemens.Engineering to the exact discovered DLL via codeBase (Siemens’ recommended approach). Provide a fallback AssemblyResolve only if needed. [Connecting...ion of ...], [TIA Portal...ls and ...]
+Do not copy Siemens DLLs to our app folder; we reference them in place from the official installation. [Connecting...ion of ...]
+
+2.7 Persistence
+
+Save a versioned profile (e.g., “TIA_V17”) with: path, file version, token, last validated timestamp.
+On startup, quick re‑validate; if invalid/stale, offer to re‑run Wizard.
+
+
+3) Session attach & read‑only tags extraction
+
+Attach to the running TIA Portal instance (with UI) that already has your project open. (Siemens documents enumeration/attach and multi‑instance behavior.) [Connecting...ion of ...]
+Enumerate PLCs with PlcSoftware, then traverse TagTableGroup.TagTables and read all tags (name, datatype, address if present, comment, retentive). Siemens documents PlcTagTable and shows editor integration. [Starting t...PI for ...], [Openness:...- Siemens]
+Read‑only discipline: no writes/mutations; safe to run in parallel with the TIA UI. [Connecting...ion of ...]
+
+
+4) Output (LLM‑ready, compact)
+
+One workbook: PLC_Tags.xlsx
+Sheet: PLC_Tags (single sheet to keep it small)
+
+Columns
+
+ProjectName, PLC_Name, TagTable, TagName, DataType, Address (may be blank for optimized/symbolic), Comment, Retentive, Scope (Global), TagId (stable ID)
+
+Siemens shows how to work with PlcTagTable and to open it in the editor; addresses can be absent for symbolic/optimized tags, which is expected. [Starting t...PI for ...]
+
+5) GUI flow
+
+
+First‑run → Wizard
+
+Optional Priority directories input (user can list paths to scan first).
+Start scanning: Stage 1 → Stage 2 → Stage 3 (full drives).
+Live progress + Abort + Manual Browse.
+On first valid V17 set → prompt to select → save profile → proceed.
+
+
+
+Tag Export
+
+Attach to running TIA → confirm project. [Connecting...ion of ...]
+Select PLCs (multi‑select).
+Options (defaults on): Include Comments, Include Retentive, Include Address column.
+Run → progress per PLC/tag table; write PLC_Tags.xlsx.
+Show row count + “Open file” + “Show Tag Table in TIA” (for any selection). [Starting t...PI for ...]
+
+
+
+Settings
+
+View/edit V17 profile; Re‑run Wizard; Switch TIA version in the future.
+
+
+
+
+6) Reliability, safety, and UX notes
+
+Openness prompt: first API access may show “Openness access” dialog; user clicks “Yes to all” to whitelist the app in the registry (Siemens explains this behavior). [Tips for T...rt Siemens]
+Group membership: ensure user is in “Siemens TIA Openness” Windows group (commonly required by examples and Siemens docs). [GitHub - M...ns TIA ...]
+Bitness check: validate 64‑bit Python to match TIA V17 process.
+Abort: available in Wizard (scanning) and during tag export (stops cleanly).
+
+
+7) Edge cases
+
+Multiple TIA versions installed: You can keep multiple profiles (V17, V18…)—this MVP will use the V17 profile. (Siemens describes co‑installed PublicAPI versions by folder.) [What's new...- Siemens]
+No tag tables: Valid outcome—log which PLCs had none; workbook may still have ProjectName rows = 0.
+Symbolic‑only projects: Expect empty Address cells; we still export names, types, comments. [Starting t...PI for ...]
+
+
+8) Build plan & milestones
+Phase 0 — Wizard (1.5–2.5 days)
+
+Full‑drive recursive scan engine (Stages 1–3), no depth cap, no throttling (per your decision).
+Live progress + Abort + Manual Browse + Priority directories input.
+Validation (version/token/load test), selection UI (always prompt), profile persistence.
+Generate binding config per Siemens guidance (codeBase mapping). [Connecting...ion of ...], [TIA Portal...ls and ...]
+
+Phase 1 — Session attach & PLC discovery (1 day)
+
+Enumerate TIA instances; attach to UI instance; list PLCs with PlcSoftware. [Connecting...ion of ...]
+
+Phase 2 — Tags extraction (1–2 days)
+
+Read TagTables and tag items; map to schema; robust handling of blank addresses & large tables. [Starting t...PI for ...]
+
+Phase 3 — Excel writer & UX polish (0.5–1 day)
+
+Stream/write‑only output; progress bars; open file; “Show in TIA” for selected tag table. [Starting t...PI for ...]
+
+Phase 4 — Hardening (0.5–1 day)
+
+Test across mixed Siemens install layouts; verify abort behaviors; validate with your sample project.
+
+
+9) Deliverables
+
+Packaged desktop app (Wizard + Tag Export).
+V17 profile stored with verified path, version, token.
+PLC_Tags.xlsx (compact, single sheet).
+QuickStart: (1) Run Wizard; (2) Attach to TIA; (3) Select PLCs; (4) Export.
+
+Notes include: Openness prompt (“Yes to all”) and group membership. [Tips for T...rt Siemens], [GitHub - M...ns TIA ...]
+
+
+
+
+10) Accepted decisions (explicit)
+
+Scan scope: Search all fixed drives by default; user may pre‑select priority directories to scan first.
+Time cap: No time cap—scan runs until completion unless the user Aborts.
+Ambiguity rule: If multiple valid V17 sets are found, always prompt the user to choose (no auto‑selection).

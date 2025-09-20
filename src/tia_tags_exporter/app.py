@@ -1,0 +1,43 @@
+
+from __future__ import annotations
+# -----------------------------------------------------------------------------
+# PATCH-ID: TIAEXP-20250919-MULTIDIR-LOADER-V2
+# Ensure TIA Openness multi-directory loader runs AFTER any from __future__ imports.
+try:
+    from tia_tags_exporter.config_store import ProfileStore
+    from tia_tags_exporter.loader_multi import prepare_and_load
+    _pub = None
+    try:
+        _store = ProfileStore()
+        _prof = _store.get_profile("V17")
+        if _prof:
+            _pub = _prof.get("public_api_dir") if hasattr(_prof, "get") else getattr(_prof, "public_api_dir", None)
+    except Exception:
+        _pub = None
+    _diag = prepare_and_load(_pub)
+    try:
+        print("TIAExporter loader ready:", {"core": _diag.get("core_path"), "version": _diag.get("version"),
+                                           "PATH_head": _diag.get("path_head")})
+    except Exception:
+        pass
+except Exception as _e:
+    # Non-fatal: continue even if loader init fails; attach will then raise helpful diagnostics
+    pass
+# -----------------------------------------------------------------------------
+import sys
+from pathlib import Path
+from PySide6 import QtWidgets
+from .logging_utils import configure_logging
+from .config_store import ProfileStore
+from .gui.main_window import MainWindow
+
+def main():
+    configure_logging()
+    app = QtWidgets.QApplication(sys.argv)
+    store = ProfileStore(Path.home()/'.tia-tags-exporter')
+    w = MainWindow(store)
+    w.show()
+    sys.exit(app.exec())
+
+if __name__ == '__main__':
+    main()

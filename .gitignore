@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE directories
+.vscode/
+.idea/
+
+# Build / packaging
+*.egg-info/
+dist/
+build/
+
+# OS noise
+Thumbs.db
+.DS_Store
+

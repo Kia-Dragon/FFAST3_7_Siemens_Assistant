@@ -1,0 +1,168 @@
+"""
+Robust multi-directory loader for Siemens TIA Openness.
+
+PATCH-ID: TIAEXP-20250919-MULTIDIR-LOADER-V2
+"""
+
+from __future__ import annotations
+import os
+from pathlib import Path
+import clr  # pythonnet
+from System import AppDomain
+from System.Reflection import Assembly, AssemblyName
+from System import ResolveEventHandler
+
+_TIAEXP_RESOLVE_INSTALLED = False
+
+_CULTURES = (
+    "en-US","de-DE","fr-FR","es-ES","it-IT","pt-BR","ru-RU","pl-PL",
+    "cs-CZ","zh-CN","ja-JP","tr-TR","ko-KR"
+)
+
+def _dedupe_dirs(cands):
+    seen = set(); out = []
+    for d in cands:
+        if not d: 
+            continue
+        try:
+            p = Path(d)
+            if not p.exists():
+                continue
+            key = str(p.resolve()).lower()
+            if key not in seen:
+                seen.add(key)
+                out.append(str(p.resolve()))
+        except Exception:
+            continue
+    return out
+
+def _default_public_api_v17():
+    pf = os.environ.get("ProgramW6432") or os.environ.get("ProgramFiles") or r"C:\Program Files"
+    return str(Path(pf) / "Siemens" / "Automation" / "Portal V17" / "PublicAPI" / "V17")
+
+def _discover_dirs(public_api_dir: str | None):
+    pad = Path(public_api_dir) if public_api_dir else Path(_default_public_api_v17())
+    public_dir = pad
+    portal_root = public_dir.parent.parent if public_dir.name.lower() == "v17" else public_dir.parent.parent
+    bin_dir  = portal_root / "bin"
+    bin64_dir = portal_root / "bin64"
+
+    dirs = [public_dir, bin_dir, bin64_dir, portal_root]
+    for c in _CULTURES:
+        cd = public_dir / c
+        if cd.is_dir():
+            dirs.append(str(cd))
+    return _dedupe_dirs(dirs)
+
+def prepare_and_load(public_api_dir: str | None):
+    """
+    Multi-folder, strict loader for TIA Openness.
+
+    - Build search set: PublicAPI\\V17, Portal V17\\bin/bin64, Portal root, culture subfolders
+    - Index all *managed* Siemens assemblies via AssemblyName.GetAssemblyName (no eager loads)
+    - Install strict AssemblyResolve to resolve ONLY from our indexed files
+    - Prepend those dirs to process PATH and add to native loader via os.add_dll_directory
+    - Load Siemens.Engineering.dll and (best-effort) preload companions
+    """
+    global _TIAEXP_RESOLVE_INSTALLED
+
+    search_dirs = _discover_dirs(public_api_dir)
+
+    # Reorder PATH (process scope): demote obvious offender "...Software Installs\bin" to tail
+    cur = os.environ.get("Path", "")
+    parts = [p for p in cur.split(os.pathsep) if p.strip()]
+    keep, tail = [], []
+    for p in parts:
+        pl = p.lower().rstrip("\\/")
+        if pl.endswith("\\software installs\\bin"):
+            tail.append(p)
+        else:
+            keep.append(p)
+    parts = keep + tail
+
+    # Prepend Siemens dirs if not already present
+    def _norm(s): 
+        return s.lower().rstrip("\\/")
+    existing = {_norm(p) for p in parts}
+    prepend = [d for d in search_dirs if _norm(d) not in existing]
+    os.environ["Path"] = os.pathsep.join(prepend + parts)
+
+    # Native DLL directories
+    if hasattr(os, "add_dll_directory"):
+        for d in search_dirs:
+            try:
+                os.add_dll_directory(d)
+            except Exception:
+                pass
+
+    # Build managed assembly index
+    asm_index = {}  # (Name, Culture or '') -> path
+    for d in search_dirs:
+        dp = Path(d)
+        if not dp.is_dir():
+            continue
+        for dll in dp.glob("*.dll"):
+            try:
+                an = AssemblyName.GetAssemblyName(str(dll))
+                name = an.Name
+                cult = str(an.CultureName) if an.CultureName else ""
+                asm_index[(name, cult)] = str(dll)
+                if cult:
+                    asm_index.setdefault((name, ""), str(dll))
+            except Exception:
+                continue  # native/unmanaged
+
+    # Strict AssemblyResolve (install once)
+    if not _TIAEXP_RESOLVE_INSTALLED:
+        def _resolve(sender, args):
+            try:
+                an = AssemblyName(args.Name)
+                key_c = (an.Name, str(an.CultureName) if an.CultureName else "")
+                key_n = (an.Name, "")
+                path = asm_index.get(key_c) or asm_index.get(key_n)
+                if path and os.path.exists(path):
+                    return Assembly.LoadFrom(path)
+            except Exception:
+                return None
+            return None
+
+        AppDomain.CurrentDomain.AssemblyResolve += ResolveEventHandler(_resolve)
+        _TIAEXP_RESOLVE_INSTALLED = True
+
+    # Load core assembly explicitly
+    core_path = asm_index.get(("Siemens.Engineering", "")) or asm_index.get(("Siemens.Engineering", "en-US"))
+    if not core_path:
+        # last resort: expected file next to public_api_dir
+        expected = Path(search_dirs[0]) / "Siemens.Engineering.dll"
+        core_path = str(expected)
+    if not os.path.exists(core_path):
+        raise FileNotFoundError(f"Cannot locate Siemens.Engineering.dll under: {search_dirs}")
+
+    clr.AddReferenceToFileAndPath(core_path)
+    import Siemens.Engineering as tia  # noqa: F401
+
+    core_asm = Assembly.LoadFrom(core_path)
+    an = core_asm.GetName()
+    version = str(an.Version)
+    pkt = an.GetPublicKeyToken()
+    token = "".join(f"{b:02x}" for b in pkt) if pkt is not None else None
+
+    # Companion preloads (best-effort)
+    preloaded = {}
+    for simple in ("Siemens.Engineering.SW.Plc", "Siemens.Engineering.Hmi"):
+        path = asm_index.get((simple, "")) or asm_index.get((simple, "en-US"))
+        if path and os.path.exists(path):
+            try:
+                Assembly.LoadFrom(path)
+                preloaded[simple] = path
+            except Exception:
+                preloaded[simple] = None
+
+    return {
+        "search_dirs": search_dirs,
+        "path_head": os.environ.get("Path", "").split(os.pathsep)[:10],
+        "version": version,
+        "public_key_token": token,
+        "preloaded": preloaded,
+        "core_path": core_path,
+    }
