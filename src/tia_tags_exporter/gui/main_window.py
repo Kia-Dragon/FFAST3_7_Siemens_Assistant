@@ -1,6 +1,8 @@
 ﻿from __future__ import annotations
 
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
+import re
 import sys
 
 from PySide6 import QtGui, QtWidgets
@@ -12,6 +14,12 @@ if __package__:
     from ..session import TiaSession
     from ..settings import DllProfile
     from ..tag_extractor import TagExtractor
+    from ..block_exporter import ProgramBlockExtractor
+    from ..block_writer import (
+        write_blocks_csv,
+        write_blocks_google_sheets,
+        write_blocks_xlsx,
+    )
 else:
     package_root = Path(__file__).resolve().parents[2]
     root_str = str(package_root)
@@ -23,6 +31,12 @@ else:
     from tia_tags_exporter.session import TiaSession
     from tia_tags_exporter.settings import DllProfile
     from tia_tags_exporter.tag_extractor import TagExtractor
+    from tia_tags_exporter.block_exporter import ProgramBlockExtractor
+    from tia_tags_exporter.block_writer import (
+        write_blocks_csv,
+        write_blocks_google_sheets,
+        write_blocks_xlsx,
+    )
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -59,23 +73,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self._dark_mode = True
 
         self.chkDarkMode = QtWidgets.QCheckBox("Dark mode")
-
         self.chkDarkMode.setChecked(True)
-
         self.chkDarkMode.toggled.connect(self._on_theme_toggled)
 
         self.lblProfile = QtWidgets.QLabel("Profile: not set")
+        self.profileIndicator = QtWidgets.QFrame()
+        self.profileIndicator.setObjectName("profileIndicator")
+        self.profileIndicator.setFixedSize(12, 12)
+        self.profileIndicator.setStyleSheet(
+            "QFrame#profileIndicator { border: 1px solid #404040; border-radius: 6px; background-color: #c0392b; }"
+        )
 
         self.btnWizard = QtWidgets.QPushButton("Run DLL Wizard.")
-
         self.btnWizard.clicked.connect(self.on_wizard)
 
         self.btnAttach = QtWidgets.QPushButton("Attach to TIA V17.")
-
         self.btnAttach.clicked.connect(self.on_attach)
 
         self.plcList = QtWidgets.QListWidget()
-
         self.plcList.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.MultiSelection)
 
         self.chkComments = QtWidgets.QCheckBox("Include Comments")
@@ -91,8 +106,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btnExport.clicked.connect(self.on_export)
 
         self.cmbExportFormat = QtWidgets.QComboBox()
-        self.cmbExportFormat.addItem("Excel (.xlsx)", "xlsx")
         self.cmbExportFormat.addItem("CSV (.csv)", "csv")
+        self.cmbExportFormat.addItem("Excel (.xlsx)", "xlsx")
         self.cmbExportFormat.addItem("Google Sheets", "gsheet")
         self.cmbExportFormat.setCurrentIndex(0)
 
@@ -102,22 +117,58 @@ class MainWindow(QtWidgets.QMainWindow):
         export_row.addWidget(self.cmbExportFormat)
         export_row.addStretch(1)
 
+        self.btnExportBlocks = QtWidgets.QPushButton("Export Program Blocks")
+        self.btnExportBlocks.clicked.connect(self.on_export_blocks)
+
+        self.cmbBlockFormat = QtWidgets.QComboBox()
+        self.cmbBlockFormat.addItem("CSV (.csv)", "csv")
+        self.cmbBlockFormat.addItem("Excel (.xlsx)", "xlsx")
+        self.cmbBlockFormat.addItem("Google Sheets", "gsheet")
+        self.cmbBlockFormat.setCurrentIndex(0)
+
+        blocks_row = QtWidgets.QHBoxLayout()
+        blocks_row.addWidget(self.btnExportBlocks)
+        blocks_row.addWidget(QtWidgets.QLabel("Format:"))
+        blocks_row.addWidget(self.cmbBlockFormat)
+        blocks_row.addStretch(1)
+
+        self.btnExportHmi = QtWidgets.QPushButton("Export HMI Information")
+        self.btnExportHmi.clicked.connect(self.on_export_hmi)
+
+        self.cmbHmiFormat = QtWidgets.QComboBox()
+        self.cmbHmiFormat.addItem("CSV (.csv)", "csv")
+        self.cmbHmiFormat.addItem("Excel (.xlsx)", "xlsx")
+        self.cmbHmiFormat.addItem("Google Sheets", "gsheet")
+        self.cmbHmiFormat.setCurrentIndex(0)
+
+        hmi_row = QtWidgets.QHBoxLayout()
+        hmi_row.addWidget(self.btnExportHmi)
+        hmi_row.addWidget(QtWidgets.QLabel("Format:"))
+        hmi_row.addWidget(self.cmbHmiFormat)
+        hmi_row.addStretch(1)
+
         self.log = QtWidgets.QTextEdit()
         self.log.setReadOnly(True)
 
-        for w in [
-            self.chkDarkMode,
-            self.lblProfile,
-            self.btnWizard,
-            self.btnAttach,
-            self.plcList,
-            self.chkComments,
-            self.chkRetentive,
-            self.chkAddress,
-        ]:
-            layout.addWidget(w)
+        layout.addWidget(self.chkDarkMode)
+
+        profile_row = QtWidgets.QHBoxLayout()
+        profile_row.addWidget(self.profileIndicator)
+        profile_row.addSpacing(6)
+        profile_row.addWidget(self.lblProfile)
+        profile_row.addStretch(1)
+        layout.addLayout(profile_row)
+
+        layout.addWidget(self.btnWizard)
+        layout.addWidget(self.btnAttach)
+        layout.addWidget(self.plcList)
+        layout.addWidget(self.chkComments)
+        layout.addWidget(self.chkRetentive)
+        layout.addWidget(self.chkAddress)
 
         layout.addLayout(export_row)
+        layout.addLayout(blocks_row)
+        layout.addLayout(hmi_row)
         layout.addWidget(self.log)
 
         self._apply_theme(True)
@@ -129,13 +180,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def refresh_profile_label(self):
 
-        if self.prof and self.prof.public_api_dir:
-
-            self.lblProfile.setText(f"Profile: V17 @ {self.prof.public_api_dir}")
-
+        prof = self.prof
+        if prof and prof.public_api_dir:
+            self.lblProfile.setText(f"Profile: V17 @ {prof.public_api_dir}")
+            ready = True
         else:
-
             self.lblProfile.setText("Profile: not set")
+            ready = False
+        self._set_profile_indicator(ready)
+
+    def _set_profile_indicator(self, ready: bool) -> None:
+        color = "#27ae60" if ready else "#c0392b"
+        base = "QFrame#profileIndicator { border: 1px solid #404040; border-radius: 6px; background-color: %s; }"
+        self.profileIndicator.setStyleSheet(base % color)
 
     def _on_theme_toggled(self, checked: bool) -> None:
         self._apply_theme(checked)
@@ -404,6 +461,192 @@ class MainWindow(QtWidgets.QMainWindow):
             message += "\n(Note: spreadsheet remains owned by the service account.)"
         self.log.append(message)
         QtWidgets.QMessageBox.information(self, "Done", message)
+
+    def on_export_hmi(self):
+        QtWidgets.QMessageBox.information(
+            self,
+            "Export HMI Information",
+            "HMI export is not yet implemented. Please run the dedicated exporter when available.",
+        )
+
+    def on_export_blocks(self):
+        if not self._session:
+            QtWidgets.QMessageBox.warning(self, "Export Program Blocks", "Attach to TIA first.")
+            return
+
+        selected = [i.text() for i in self.plcList.selectedItems()] or None
+        extractor = ProgramBlockExtractor(self._session)
+        try:
+            rows, sources = extractor.extract_blocks(selected)
+        except Exception as err:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Export Program Blocks",
+                "Failed to gather program blocks:\n{}".format(err),
+            )
+            return
+
+        if not rows:
+            QtWidgets.QMessageBox.information(
+                self, "Export Program Blocks", "No program blocks found to export."
+            )
+            return
+
+        fmt = self.cmbBlockFormat.currentData()
+
+        if fmt == "xlsx":
+            out, _ = QtWidgets.QFileDialog.getSaveFileName(
+                self, "Save Program Blocks Excel", "PLC_Program_Blocks.xlsx", "Excel (*.xlsx)"
+            )
+            if not out:
+                return
+            out_path = Path(out)
+            if out_path.suffix.lower() != ".xlsx":
+                out_path = out_path.with_suffix(".xlsx")
+            extras = self._write_block_sources(out_path, sources, rows)
+            write_blocks_xlsx(rows, out_path)
+            message = "Exported {} rows to:\n{}".format(len(rows), out_path)
+            if extras:
+                message += "\nSaved {} source files to {}".format(len(extras), extras[0].parent)
+            self.log.append(f"Exported {len(rows)} program block rows -> {out_path}")
+            if extras:
+                self.log.append(f"Block sources -> {extras[0].parent}")
+            QtWidgets.QMessageBox.information(self, "Done", message)
+            return
+
+        if fmt == "csv":
+            out, _ = QtWidgets.QFileDialog.getSaveFileName(
+                self, "Save Program Blocks CSV", "PLC_Program_Blocks.csv", "CSV (*.csv)"
+            )
+            if not out:
+                return
+            out_path = Path(out)
+            if out_path.suffix.lower() != ".csv":
+                out_path = out_path.with_suffix(".csv")
+            extras = self._write_block_sources(out_path, sources, rows)
+            write_blocks_csv(rows, out_path)
+            message = "Exported {} rows to:\n{}".format(len(rows), out_path)
+            if extras:
+                message += "\nSaved {} source files to {}".format(len(extras), extras[0].parent)
+            self.log.append(f"Exported {len(rows)} program block rows -> {out_path}")
+            if extras:
+                self.log.append(f"Block sources -> {extras[0].parent}")
+            QtWidgets.QMessageBox.information(self, "Done", message)
+            return
+
+        creds_path = self._google_credentials_path
+        if not creds_path or not Path(creds_path).exists():
+            picked, _ = QtWidgets.QFileDialog.getOpenFileName(
+                self,
+                "Google service account credentials",
+                str(Path.home()),
+                "JSON (*.json)",
+            )
+            if not picked:
+                return
+            creds_path = Path(picked)
+            self._google_credentials_path = creds_path
+
+        title, ok = QtWidgets.QInputDialog.getText(
+            self, "Google Sheets", "Spreadsheet title:", text="PLC Program Blocks"
+        )
+        if not ok or not title.strip():
+            return
+        share_email, ok = QtWidgets.QInputDialog.getText(
+            self,
+            "Google Sheets",
+            "Share with email (optional):",
+            text=self._google_share_email,
+        )
+        if not ok:
+            return
+        share_email = share_email.strip()
+        self._google_share_email = share_email
+
+        prepared_rows = []
+        for row in rows:
+            if is_dataclass(row):
+                data = asdict(row)
+            elif isinstance(row, dict):
+                data = dict(row)
+            elif hasattr(row, "__dict__"):
+                data = dict(row.__dict__)
+            else:
+                try:
+                    data = dict(row)
+                except Exception:
+                    data = {}
+            if data.get("SourceReference"):
+                data["SourceReference"] = "Not exported (Google Sheets)"
+            prepared_rows.append(data)
+
+        try:
+            info = write_blocks_google_sheets(
+                prepared_rows, creds_path, title.strip(), share_with=share_email or None
+            )
+        except RuntimeError as err:
+            QtWidgets.QMessageBox.critical(self, "Google Sheets", str(err))
+            return
+        except Exception as err:
+            QtWidgets.QMessageBox.critical(
+                self, "Google Sheets", "Failed to export program blocks:\n{}".format(err)
+            )
+            return
+
+        url = info.get("url", "") if isinstance(info, dict) else ""
+        if url:
+            message = "Exported {} rows to Google Sheets:\n{}".format(len(rows), url)
+        else:
+            message = "Exported {} rows to Google Sheets.".format(len(rows))
+        if share_email:
+            message += "\nShared with: {}".format(share_email)
+        else:
+            message += "\n(Note: spreadsheet remains owned by the service account.)"
+        if sources:
+            message += "\nSource files are only written when exporting to Excel/CSV."
+        self.log.append(message)
+        QtWidgets.QMessageBox.information(self, "Done", message)
+
+    def _write_block_sources(self, out_path: Path, sources, rows):
+        if not sources:
+            return []
+        out_path = Path(out_path)
+        target_dir = out_path.parent / "{}_sources".format(out_path.stem)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        written = []
+        for source in sources:
+            base_name = self._sanitize_source_filename(source.filename)
+            final_name = self._ensure_unique_filename(target_dir, base_name)
+            file_path = target_dir / final_name
+            try:
+                file_path.write_text(source.content, encoding="utf-8", errors="replace")
+            except Exception:
+                file_path.write_bytes(source.content.encode("utf-8", "replace"))
+            rel = "{}/{}".format(target_dir.name, final_name)
+            for row in rows:
+                if getattr(row, "SourceReference", "") == source.filename:
+                    row.SourceReference = rel
+            written.append(file_path)
+        return written
+
+    def _ensure_unique_filename(self, directory: Path, name: str) -> str:
+        candidate = directory / name
+        if not candidate.exists():
+            return name
+        stem = candidate.stem
+        suffix = candidate.suffix
+        index = 1
+        while True:
+            attempt = directory / "{}_{}{}".format(stem, index, suffix)
+            if not attempt.exists():
+                return attempt.name
+            index += 1
+
+    def _sanitize_source_filename(self, name: str) -> str:
+        cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", name)
+        cleaned = cleaned.strip("._")
+        return cleaned or "program_block.src"
+
 
 if __name__ == "__main__":
     import os
