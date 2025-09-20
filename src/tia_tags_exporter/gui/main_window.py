@@ -20,6 +20,8 @@ if __package__:
         write_blocks_google_sheets,
         write_blocks_xlsx,
     )
+    from .dll_wizard_window import DllWizardWindow
+    from .hmi_export_window import HmiExportWindow
 else:
     package_root = Path(__file__).resolve().parents[2]
     root_str = str(package_root)
@@ -37,6 +39,8 @@ else:
         write_blocks_google_sheets,
         write_blocks_xlsx,
     )
+    from tia_tags_exporter.gui.dll_wizard_window import DllWizardWindow
+    from tia_tags_exporter.gui.hmi_export_window import HmiExportWindow
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -135,18 +139,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btnExportHmi = QtWidgets.QPushButton("Export HMI Information")
         self.btnExportHmi.clicked.connect(self.on_export_hmi)
 
-        self.cmbHmiFormat = QtWidgets.QComboBox()
-        self.cmbHmiFormat.addItem("CSV (.csv)", "csv")
-        self.cmbHmiFormat.addItem("Excel (.xlsx)", "xlsx")
-        self.cmbHmiFormat.addItem("Google Sheets", "gsheet")
-        self.cmbHmiFormat.setCurrentIndex(0)
-
-        hmi_row = QtWidgets.QHBoxLayout()
-        hmi_row.addWidget(self.btnExportHmi)
-        hmi_row.addWidget(QtWidgets.QLabel("Format:"))
-        hmi_row.addWidget(self.cmbHmiFormat)
-        hmi_row.addStretch(1)
-
         self.log = QtWidgets.QTextEdit()
         self.log.setReadOnly(True)
 
@@ -168,13 +160,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         layout.addLayout(export_row)
         layout.addLayout(blocks_row)
-        layout.addLayout(hmi_row)
+        layout.addWidget(self.btnExportHmi)
         layout.addWidget(self.log)
 
         self._apply_theme(True)
         self._session: TiaSession | None = None
         self._google_credentials_path: Path | None = None
         self._google_share_email: str = ""
+        self._wizard_window = None
+        self._hmi_window = None
 
         self.refresh_profile_label()
 
@@ -245,22 +239,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def on_wizard(self):
 
-        if __package__:
-            from .wizard import DllWizard
-        else:
-            from tia_tags_exporter.gui.wizard import DllWizard
+        if self._wizard_window is None:
+            self._wizard_window = DllWizardWindow(self.store, self)
+            self._wizard_window.profile_updated.connect(self._on_wizard_profile_updated)
+            self._wizard_window.destroyed.connect(self._on_wizard_closed)
+        self._wizard_window.show()
+        self._wizard_window.raise_()
+        self._wizard_window.activateWindow()
 
-        wiz = DllWizard(self.store, self)
-
-        # We do NOT rely on Accept/Reject return code anymore.
-
-        wiz.exec()
-
-        # Always reload profile after wizard closes (user may have pressed Close)
-
+    def _on_wizard_profile_updated(self) -> None:
         self.prof = self.store.get_profile("V17")
-
         self.refresh_profile_label()
+
+    def _on_wizard_closed(self) -> None:
+        self._wizard_window = None
 
     def on_attach(self):
 
@@ -463,11 +455,11 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.information(self, "Done", message)
 
     def on_export_hmi(self):
-        QtWidgets.QMessageBox.information(
-            self,
-            "Export HMI Information",
-            "HMI export is not yet implemented. Please run the dedicated exporter when available.",
-        )
+        if self._hmi_window is None:
+            self._hmi_window = HmiExportWindow(self.store, self)
+        self._hmi_window.show()
+        self._hmi_window.raise_()
+        self._hmi_window.activateWindow()
 
     def on_export_blocks(self):
         if not self._session:
