@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import csv
 from dataclasses import asdict, is_dataclass
@@ -25,7 +25,7 @@ _BLOCK_HEADERS = [
 
 
 def _row_to_mapping(row) -> Mapping[str, object]:
-    if is_dataclass(row):
+    if is_dataclass(row) and not isinstance(row, type):
         return asdict(row)
     if hasattr(row, "__dict__"):
         return row.__dict__
@@ -118,8 +118,6 @@ def write_blocks_google_sheets(
             pass
 
     return {
-        "url": spreadsheet.url,
+        "spreadsheet_url": spreadsheet.url,
         "spreadsheet_id": spreadsheet.id,
-        "title": spreadsheet.title,
-        "worksheet_title": worksheet.title,
     }

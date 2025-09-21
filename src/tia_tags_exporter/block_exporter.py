@@ -1,8 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Tuple
+from importlib import import_module
+from typing import Any, Iterable, List, Optional, Tuple
 
 from .session import TiaSession
 
@@ -32,6 +33,26 @@ class BlockSourceExport:
     language: str
     filename: str
     content: str
+
+
+_OPENNESS_TYPES: Tuple[type[Any], type[Any]] | None = None
+
+
+def _load_openness_types() -> Tuple[type[Any], type[Any]] | None:
+    global _OPENNESS_TYPES
+    if _OPENNESS_TYPES is not None:
+        return _OPENNESS_TYPES
+    try:
+        engineering = import_module("Siemens.Engineering")
+        hw_features = import_module("Siemens.Engineering.HW.Features")
+    except ImportError:
+        return None
+    provider = getattr(engineering, "IEngineeringServiceProvider", None)
+    software_container = getattr(hw_features, "SoftwareContainer", None)
+    if provider is None or software_container is None:
+        return None
+    _OPENNESS_TYPES = (provider, software_container)
+    return _OPENNESS_TYPES
 
 
 class ProgramBlockExtractor:
@@ -76,17 +97,16 @@ class ProgramBlockExtractor:
         return rows, sources
 
     def _get_plc_software(self, device) -> Optional[object]:
-        try:
-            from Siemens.Engineering import IEngineeringServiceProvider
-            from Siemens.Engineering.HW.Features import SoftwareContainer
-        except Exception:
+        types = _load_openness_types()
+        if types is None:
             return None
+        provider_type, container_type = types
 
         items = getattr(device, "DeviceItems", None)
         if not items:
             return None
 
-        entry = None
+        entry: Any = None
         try:
             entry = items[1]
         except Exception:
@@ -100,8 +120,8 @@ class ProgramBlockExtractor:
             return None
 
         try:
-            provider = IEngineeringServiceProvider(entry)
-            container = provider.GetService[SoftwareContainer]()
+            provider = provider_type(entry)
+            container = provider.GetService[container_type]()
             return getattr(container, "Software", None) if container else None
         except Exception:
             return None
@@ -215,7 +235,11 @@ class ProgramBlockExtractor:
                     name = self._safe_str(getattr(attr, "Name", ""))
                     if not name:
                         continue
-                    raw_value = getattr(attr, "Value", getattr(attr, "ValueString", getattr(attr, "Text", "")))
+                    raw_value: Any = getattr(
+                        attr,
+                        "Value",
+                        getattr(attr, "ValueString", getattr(attr, "Text", "")),
+                    )
                     yield name, self._safe_str(raw_value)
             except Exception:
                 pass
@@ -273,19 +297,15 @@ class ProgramBlockExtractor:
                     initial = getattr(param, "DefaultValue", None)
                 if initial is None:
                     initial = getattr(param, "StartValue", None)
-                comment = getattr(param, "Comment", "")
-                if hasattr(comment, "Text"):
-                    try:
-                        comment = comment.Text
-                    except Exception:
-                        pass
+                comment_obj: Any = getattr(param, "Comment", "")
+                comment_text: Any = getattr(comment_obj, "Text", comment_obj)
                 entries.append(
                     {
                         "section": label,
                         "name": name,
                         "data_type": data_type,
                         "initial": self._safe_str(initial),
-                        "comment": self._safe_str(comment),
+                        "comment": self._safe_str(comment_text),
                     }
                 )
         return entries
@@ -299,7 +319,8 @@ class ProgramBlockExtractor:
         block,
     ) -> Optional[BlockSourceExport]:
         generate = getattr(block, "GenerateSource", None)
-        content = None
+        content: Any = None
+        candidate: Any = None
         if callable(generate):
             try:
                 candidate = generate()

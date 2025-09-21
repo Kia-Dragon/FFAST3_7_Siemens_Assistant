@@ -16,7 +16,10 @@ if os.environ.get("TIA_TAGS_EXPORTER_LOADER_READY") != "1":
             _store = _BootProfileStore(Path.home() / ".tia-tags-exporter")
             _prof = _store.get_profile("V17")
             if _prof:
-                _pub = _prof.get("public_api_dir") if hasattr(_prof, "get") else getattr(_prof, "public_api_dir", None)
+                if isinstance(_prof, dict):
+                    _pub = _prof.get("public_api_dir")
+                else:
+                    _pub = getattr(_prof, "public_api_dir", None)
         except Exception:
             _pub = None
         _diag = prepare_and_load(_pub)

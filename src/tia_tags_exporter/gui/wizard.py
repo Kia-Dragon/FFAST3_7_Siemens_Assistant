@@ -135,10 +135,10 @@ class DllWizard(QtWidgets.QDialog):
             ["Folder (full path)", "FileVersion", "Token", "Quality", "LastWrite", "Valid"]
         )
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(QtWidgets.QHeaderView.Interactive)  # draggable columns
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Interactive)  # draggable columns
         header.setStretchLastSection(False)
-        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
         # Double-click = save & close
         self.table.itemDoubleClicked.connect(self._save_current_and_close)
 
@@ -238,9 +238,11 @@ class DllWizard(QtWidgets.QDialog):
     def _save_profile(self, cand: Candidate):
         """Persist without closing the dialog."""
         token = cand.token
-        if not token:
+        if not token and cand.engineering_dll is not None:
             res = ensure_clr_and_load(cand.engineering_dll)
-            token = res.token if res.ok else None
+            if res.ok:
+                token = res.token or token
+        cand.token = token
 
         prof = DllProfile(
             tia_version="V17",
@@ -259,56 +261,37 @@ class DllWizard(QtWidgets.QDialog):
             self.accept()
 
     def on_select(self):
-
         cand = self._current_valid_candidate()
-
-        if not cand:
-
-            r = self.table.currentRow()
-
-            if r >= 0:
-
-                item0 = self.table.item(r, 0)
-
-                if item0 is not None:
-
-                    cand = item0.data(QtCore.Qt.UserRole)
-
-        if not cand:
-
+        if cand is None:
             QtWidgets.QMessageBox.warning(self, "Select", "Select a valid candidate row first.")
-
             return
-
-        # Save & close
-
-        _ = self._save_profile(cand)
-
+        self._save_profile(cand)
         self.accept()
 
     def _current_valid_candidate(self) -> Optional[Candidate]:
-        r = self.table.currentRow()
-        if r < 0:
+        row = self.table.currentRow()
+        if row < 0:
             return None
-        folder = Path(self.table.item(r, 0).text())
-        cand = next((c for c in self.valid_candidates if str(c.folder) == str(folder)), None)
-        return cand
+        item = self.table.item(row, 0)
+        if item is None:
+            return None
+        data = item.data(QtCore.Qt.ItemDataRole.UserRole)
+        if isinstance(data, Candidate) and data.is_valid:
+            return data
+        return None
 
     def on_found(self, cand: Candidate):
 
         # Fetch token via reflection (best-effort) for display & scoring
 
-        token = ""
+        token = cand.token or ""
 
-        if cand.is_valid:
-
+        if cand.is_valid and cand.engineering_dll is not None:
             res = ensure_clr_and_load(cand.engineering_dll)
-
             if res.ok:
+                token = res.token or token
 
-                token = res.token or ""
-
-            cand.token = token
+        cand.token = token
 
 
         r = self.table.rowCount()
@@ -320,7 +303,7 @@ class DllWizard(QtWidgets.QDialog):
 
         item0 = QtWidgets.QTableWidgetItem(str(cand.folder))
 
-        item0.setData(QtCore.Qt.UserRole, cand)
+        item0.setData(QtCore.Qt.ItemDataRole.UserRole, cand)
 
         self.table.setItem(r, 0, item0)
 
@@ -331,7 +314,7 @@ class DllWizard(QtWidgets.QDialog):
 
         self.table.setItem(r, 2, QtWidgets.QTableWidgetItem(token))
 
-        self.table.setItem(r, 3, QtWidgets.QTableWidgetItem(cand.quality))
+        self.table.setItem(r, 3, QtWidgets.QTableWidgetItem(cand.quality or ""))
 
         self.table.setItem(r, 4, QtWidgets.QTableWidgetItem(cand.last_write or ""))
 
@@ -369,7 +352,7 @@ class DllWizard(QtWidgets.QDialog):
                     self.table.selectRow(row)
                     item = self.table.item(row, 0)
                     if item is not None:
-                        self.table.scrollToItem(item, QtWidgets.QAbstractItemView.PositionAtCenter)
+                        self.table.scrollToItem(item, QtWidgets.QAbstractItemView.ScrollHint.PositionAtCenter)
             else:
                 self._show_missing_summary()
                 return

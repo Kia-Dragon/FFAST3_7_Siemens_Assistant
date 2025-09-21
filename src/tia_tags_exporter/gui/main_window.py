@@ -1,47 +1,59 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
-from dataclasses import asdict, is_dataclass
+from dataclasses import fields, is_dataclass
 from pathlib import Path
+from collections.abc import Iterable
 import re
 import sys
+from typing import Any, Dict, Mapping
+
+if __package__ is None or __package__ == "":
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from PySide6 import QtGui, QtWidgets
 
-if __package__:
-    from ..config_store import ProfileStore
-    from ..excel_writer import write_tags_csv, write_tags_google_sheets, write_tags_xlsx
-    from ..openness_bridge import ensure_clr_and_load
-    from ..session import TiaSession
-    from ..settings import DllProfile
-    from ..tag_extractor import TagExtractor
-    from ..block_exporter import ProgramBlockExtractor
-    from ..block_writer import (
-        write_blocks_csv,
-        write_blocks_google_sheets,
-        write_blocks_xlsx,
-    )
-    from .dll_wizard_window import DllWizardWindow
-    from .hmi_export_window import HmiExportWindow
-else:
-    package_root = Path(__file__).resolve().parents[2]
-    root_str = str(package_root)
-    if root_str not in sys.path:
-        sys.path.insert(0, root_str)
-    from tia_tags_exporter.config_store import ProfileStore
-    from tia_tags_exporter.excel_writer import write_tags_csv, write_tags_google_sheets, write_tags_xlsx
-    from tia_tags_exporter.openness_bridge import ensure_clr_and_load
-    from tia_tags_exporter.session import TiaSession
-    from tia_tags_exporter.settings import DllProfile
-    from tia_tags_exporter.tag_extractor import TagExtractor
-    from tia_tags_exporter.block_exporter import ProgramBlockExtractor
-    from tia_tags_exporter.block_writer import (
-        write_blocks_csv,
-        write_blocks_google_sheets,
-        write_blocks_xlsx,
-    )
-    from tia_tags_exporter.gui.dll_wizard_window import DllWizardWindow
-    from tia_tags_exporter.gui.hmi_export_window import HmiExportWindow
+from tia_tags_exporter.config_store import ProfileStore
+from tia_tags_exporter.excel_writer import (
+    write_tags_csv,
+    write_tags_google_sheets,
+    write_tags_xlsx,
+)
+from tia_tags_exporter.openness_bridge import ensure_clr_and_load
+from tia_tags_exporter.session import TiaSession
+from tia_tags_exporter.settings import DllProfile
+from tia_tags_exporter.tag_extractor import TagExtractor
+from tia_tags_exporter.block_exporter import ProgramBlockExtractor
+from tia_tags_exporter.block_writer import (
+    write_blocks_csv,
+    write_blocks_google_sheets,
+    write_blocks_xlsx,
+)
+from tia_tags_exporter.gui.dll_wizard_window import DllWizardWindow
+from tia_tags_exporter.gui.hmi_export_window import HmiExportWindow
 
+
+
+def _normalize_mapping(mapping: Mapping[Any, Any]) -> Dict[str, Any]:
+    result: Dict[str, Any] = {}
+    for key, value in mapping.items():
+        result[str(key)] = value
+    return result
+
+
+def _row_to_dict(row: Any) -> Dict[str, Any]:
+    if is_dataclass(row) and not isinstance(row, type):
+        data = {field.name: getattr(row, field.name) for field in fields(row)}
+        return _normalize_mapping(data)
+    if isinstance(row, Mapping):
+        return _normalize_mapping(row)
+    if hasattr(row, "__dict__"):
+        return _normalize_mapping(vars(row))
+    if isinstance(row, Iterable) and not isinstance(row, (str, bytes, bytearray)):
+        try:
+            return _normalize_mapping(dict(row))
+        except Exception:
+            return {}
+    return {}
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -557,17 +569,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         prepared_rows = []
         for row in rows:
-            if is_dataclass(row):
-                data = asdict(row)
-            elif isinstance(row, dict):
-                data = dict(row)
-            elif hasattr(row, "__dict__"):
-                data = dict(row.__dict__)
-            else:
-                try:
-                    data = dict(row)
-                except Exception:
-                    data = {}
+            data = _row_to_dict(row)
             if data.get("SourceReference"):
                 data["SourceReference"] = "Not exported (Google Sheets)"
             prepared_rows.append(data)
