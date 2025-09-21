@@ -327,12 +327,25 @@ class MainWindow(QtWidgets.QMainWindow):
         sel_index = int(choice.split(":")[0])
 
         try:
-
             self._session.attach(sel_index)
-
         except Exception as e:
+            import os
+            path_head = os.environ.get("PATH", "").split(os.pathsep)[:10]
+            
+            # Check for python.exe.config
+            config_path = Path(sys.executable).parent / "python.exe.config"
+            config_info = "Not found"
+            if config_path.exists():
+                config_info = f"Found, {config_path.stat().st_size} bytes"
 
-            QtWidgets.QMessageBox.critical(self, "Attach", f"Failed to attach:\n{e}")
+            diagnostics = (
+                f"Public API Dir: {self.prof.public_api_dir}\n"
+                f"python.exe.config: {config_info}\n"
+                f"PATH Head:\n"
+                f"  " + "\n  ".join(path_head)
+            )
+            
+            QtWidgets.QMessageBox.critical(self, "Attach", f"Failed to attach:\n{e}\n\nDiagnostics:\n{diagnostics}")
 
             return
 
