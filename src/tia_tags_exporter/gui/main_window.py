@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import fields, is_dataclass
 from pathlib import Path
@@ -337,6 +337,8 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         self.log.append(f"Attached. Project: {self._session.project_name}")
+        if self._hmi_window:
+            self._hmi_window.set_session(self._session)
 
         # Populate PLCs
 
@@ -469,6 +471,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def on_export_hmi(self):
         if self._hmi_window is None:
             self._hmi_window = HmiExportWindow(self.store, self)
+        session = self._session if self._session else None
+        self._hmi_window.set_session(session)
         self._hmi_window.show()
         self._hmi_window.raise_()
         self._hmi_window.activateWindow()
@@ -665,3 +669,5 @@ if __name__ == "__main__":
     window = MainWindow(store)
     window.show()
     sys.exit(app.exec())
+
+

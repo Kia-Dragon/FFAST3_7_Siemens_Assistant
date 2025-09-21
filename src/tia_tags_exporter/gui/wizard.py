@@ -156,12 +156,21 @@ class DllWizard(QtWidgets.QDialog):
         self.btnClose.clicked.connect(self.close)
 
         self.status = QtWidgets.QLabel("Profile: not saved")
+        self.profileIndicator = QtWidgets.QFrame()
+        self.profileIndicator.setObjectName("wizardProfileIndicator")
+        self.profileIndicator.setFixedSize(12, 12)
+        self._set_profile_indicator(False)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.driveGroup)
         layout.addLayout(busyRow)
         layout.addWidget(self.table)
-        layout.addWidget(self.status)
+        status_row = QtWidgets.QHBoxLayout()
+        status_row.addWidget(self.profileIndicator)
+        status_row.addSpacing(6)
+        status_row.addWidget(self.status)
+        status_row.addStretch(1)
+        layout.addLayout(status_row)
         row = QtWidgets.QHBoxLayout()
         for b in (self.btnScan, self.btnAbort, self.btnSelect, self.btnFit, self.btnClose):
             row.addWidget(b)
@@ -195,6 +204,11 @@ class DllWizard(QtWidgets.QDialog):
             self.heartbeat.clear()
             self._hb_timer.stop()
 
+    def _set_profile_indicator(self, ready: bool) -> None:
+        color = "#27ae60" if ready else "#c0392b"
+        base = "QFrame#wizardProfileIndicator { border: 1px solid #404040; border-radius: 6px; background-color: %s; }"
+        self.profileIndicator.setStyleSheet(base % color)
+
     # ---- Actions ----
 
     def _selected_drives(self) -> List[Path]:
@@ -217,6 +231,7 @@ class DllWizard(QtWidgets.QDialog):
         self.found_dlls = {name: [] for name in REQUIRED_DLLS}
         self.table.setRowCount(0)
         self.status.setText("Profile: not saved")
+        self._set_profile_indicator(False)
         self._profile_saved = False
         self._busy(True)
 
@@ -253,6 +268,7 @@ class DllWizard(QtWidgets.QDialog):
         self.store.set_profile(prof)
         self._profile_saved = True
         self.status.setText(f"Profile saved: {cand.folder}")
+        self._set_profile_indicator(True)
 
     def _save_current_and_close(self, *_):
         cand = self._current_valid_candidate()
@@ -474,6 +490,7 @@ class DllWizard(QtWidgets.QDialog):
         )
         QtWidgets.QMessageBox.critical(self, "Discovery", message)
         self.status.setText("Profile: not saved")
+        self._set_profile_indicator(False)
         self._profile_saved = False
 
     # ---- Close behavior ----
@@ -485,6 +502,8 @@ class DllWizard(QtWidgets.QDialog):
             if cand:
                 self._save_profile(cand)
         super().closeEvent(event)
+
+
 
 
 
