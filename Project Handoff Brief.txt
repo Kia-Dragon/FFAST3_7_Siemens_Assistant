@@ -1,0 +1,424 @@
+TIAExporter — SINGLE-FILE CONTEXT PACK (ASCII)
+Owner: Eric Schmidhuber
+Repo root: C:\Dev\TIAExporter
+OS: Windows 11 (should also run on Windows 10)
+Python: 3.12 (venv at C:\Dev\TIAExporter.venv)
+GUI: PySide6 (Qt for Python)
+Interop: pythonnet (import clr)
+TIA: Portal V17 Openness (Siemens.Engineering.*)
+.NET: 4.8+ required by Openness
+Excel: openpyxl (write-only)
+IDE: VS Code
+=====================================================================
+TABLE OF CONTENTS
+0) TL;DR
+
+Project Goal and Scope
+Hard Constraints and Preferences
+Repository Layout (representative)
+Data Models (summary)
+Main Runtime Flows
+Current Failure Mode (what breaks right now)
+Root Cause (why it breaks)
+Deterministic Fix Strategy (what must be implemented)
+8.1) App Config approach (python.exe.config with codeBase)
+8.2) AssemblyResolve loader (strict, multi-folder)
+8.3) Debug launcher PATH sanitization
+8.4) Attach-time guard and logging
+8.5) Order of operations (critical)
+Deliverables the next LLM must produce (D1–D4)
+Acceptance Tests (must pass)
+Troubleshooting Checklist and Signals to Log
+What NOT to do (anti-patterns)
+Machine-specific facts observed on Eric’s PC
+Appendix A: Example python.exe.config with multiple Siemens DLLs
+Appendix B: Example minimal generator algorithm (pseudo-PowerShell)
+Appendix C: Example Python AssemblyResolve loader outline
+Appendix D: Example VS Code launch.json snippet with clean PATH
+References (Siemens official + community)
+
+=====================================================================
+0) TL;DR
+TIAExporter is a Windows-only Python 3.12 GUI that discovers the correct TIA Portal V17 Openness location (PublicAPI\V17), attaches to a running TIA instance, enumerates PLCs, and exports PLC global tags to Excel.
+Hard blocker: TiaPortal.GetProcesses() fails with System.IO.FileLoadException because Siemens’ internal LocationProvider sees the wrong bin folder first (e.g., C:\Eric\Software Installs\bin) on PATH and rejects the Openness environment.
+Non-negotiable requirement: Load MULTIPLE Siemens managed DLLs from MULTIPLE directories in a deterministic way BEFORE TiaPortal is touched:
+
+Managed assemblies from PublicAPI\V17 and culture subfolders (e.g., en-US).
+Native dependencies from Portal V17\bin (and optionally bin64).
+Either bind via python.exe.config with  or install a strict AppDomain.AssemblyResolve that returns only files from PublicAPI\V17 (+ cultures). Siemens documents both approaches.
+
+=====================================================================
+
+Project Goal and Scope
+=====================================================================
+Goal:
+Let the user select and persist the proper TIA V17 PublicAPI folder containing Siemens.Engineering.dll.
+Attach to a running Siemens TIA Portal V17 process via TiaPortal.GetProcesses().
+Enumerate PLC devices and extract PLC global tags, export to Excel.
+
+Out of scope for this context file: shipping code patches. This file exists so another coding LLM can read and implement the fixes without you pasting source files.
+=====================================================================
+2) Hard Constraints and Preferences
+
+Primary language: Python 3.12 on Windows. Avoid C# unless truly necessary.
+GUI: PySide6 (Qt for Python).
+Interop: pythonnet (import clr).
+.NET Framework 4.8+ required.
+All implementation work products delivered as idempotent PowerShell patch scripts (backup before modify), but THIS document is a single ASCII context for an LLM to read.
+Keep GUI responsive: heavy tasks on background threads where needed.
+Do not load multiple major versions of Siemens.Engineering.* in a single process (pythonnet cannot unload from default AppDomain).
+
+=====================================================================
+3) Repository Layout (representative)
+C:\Dev\TIAExporter
+.venv
+src
+tia_tags_exporter
+app.py                  # launches MainWindow
+gui
+main_window.py        # shows profile status, attach to TIA, export to Excel
+wizard.py             # scans for Siemens.Engineering.dll, ranks, persists selection
+discovery.py            # drive scan for candidates
+validation.py           # enrich candidate with PE FileVersion, path heuristics
+openness_bridge.py      # pythonnet load + reflection
+session.py              # TiaSession: list_instances(), attach()
+tag_extractor.py        # enumerates PLCs, yields TagRow
+excel_writer.py         # openpyxl write-only workbook
+config_store.py         # ProfileStore to profiles.json
+settings.py             # DllProfile, AppConfig models
+docs\
+=====================================================================
+4) Data Models (summary)
+Candidate:
+folder: Path
+engineering_dll: Path
+version: str or None
+token: str or None
+is_valid: bool
+reason: str or None
+quality: str
+last_write: str or None
+DllProfile:
+tia_version: "V17"
+public_api_dir: Path (persist as string)
+assemblies: ["Siemens.Engineering.dll"]
+public_key_token: "d29ec89bac048f84"
+file_version: str or None
+last_validated: str or None
+TiaInstanceInfo:
+index: int
+description: str
+TagRow:
+ProjectName, PLC_Name, TagTable, TagName, DataType, Address, Comment, Retentive, Scope, TagId
+=====================================================================
+5) Main Runtime Flows
+A) DLL Discovery & Save (Wizard)
+
+Background scan across drives for Siemens.Engineering.dll under PublicAPI\V17.
+validation.py enriches candidates (PE version, path quality).
+Wizard lists ranked candidates; user selects.
+ProfileStore persists V17 profile with public_api_dir as a string path.
+
+B) Attach & Export
+
+Load Openness; attach: TiaSession.list_instances() -> user selects -> session.attach(index).
+TagExtractor iterates PLCs and Tag Tables; yields TagRow.
+ExcelWriter writes XLSX.
+
+=====================================================================
+6) Current Failure Mode (what breaks right now)
+Symptom when user clicks Attach:
+System.IO.FileLoadException: Cannot load assembly. Check your openness environment or contact your administrator.
+File name: 'C:\Eric\Software Installs\bin'
+at Siemens.Engineering.Private.LocationProvider.Validation()
+at Siemens.Engineering.TiaPortal..cctor()
+Then:
+System.TypeInitializationException: The type initializer for 'Siemens.Engineering.TiaPortal' threw an exception.
+at Siemens.Engineering.TiaPortal.GetProcesses()
+Effectively, Openness initialization fails before GetProcesses returns.
+=====================================================================
+7) Root Cause (why it breaks)
+Siemens Openness LocationProvider expects a coherent installation layout:
+
+Managed assemblies under: ...\Portal V17\PublicAPI\V17 (plus culture subfolders like en-US).
+Native DLLs under: ...\Portal V17\bin (and sometimes bin64).
+
+If the process PATH allows a non-Siemens bin directory to win the probe (e.g., C:\Eric\Software Installs\bin), LocationProvider rejects the environment. The CLR may also bind managed Siemens.* assemblies from the wrong place if present elsewhere on disk.
+Siemens guidance for Openness apps is:
+a) Provide an application configuration file with file:///... that points to the exact Openness assemblies, or
+b) Provide an AppDomain.AssemblyResolve handler that returns the correct files at runtime.
+(See References.)
+=====================================================================
+8) Deterministic Fix Strategy (what must be implemented)
+Goal: Make CLR and native loader use the correct Siemens files every time, before any TiaPortal types are touched, and ensure multiple DLLs across multiple directories are resolved.
+8.1) App Config approach (python.exe.config)
+
+Place python.exe.config next to the interpreter used to run the app: C:\Dev\TIAExporter.venv\Scripts\python.exe.config
+Discover the REAL PublicAPI\V17 folder by scanning fixed drives for Siemens.Engineering.dll under a ...\PublicAPI\V17\ path.
+Enumerate ALL Siemens.*.dll under PublicAPI\V17 and its culture subfolders (en-US, de-DE, etc.).
+Write an assemblyBinding with one dependentAssembly per DLL:
+assemblyIdentity name="Siemens.Engineering.SW.Plc" publicKeyToken="d29ec89bac048f84" culture="neutral"
+codeBase href="file:///ABSOLUTE_PATH_TO_DLL"
+Emit Siemens.Engineering.dll first, then the rest alphabetically.
+Do not hard-pin version; codeBase path is enough.
+CLR reads this file before user code, so binding is deterministic and independent of PATH.
+
+8.2) AssemblyResolve loader (strict, multi-folder)
+
+At process start (ideally before touching Openness), build an index of managed Siemens assemblies by calling AssemblyName.GetAssemblyName on all *.dll in PublicAPI\V17 and culture subfolders (metadata only).
+Install AppDomain.CurrentDomain.AssemblyResolve that:
+
+Parses requested name (simple name + culture).
+Returns only from the prebuilt index (no outside directories).
+
+
+Preload sequence (optional but helpful):
+Core Siemens.Engineering.dll
+All Siemens.Engineering..dll
+All remaining Siemens..dll
+Swallow load failures for resource-only DLLs.
+Also add native dirs (Portal V17\bin and bin64 if present) to native search using os.add_dll_directory and put them early on PATH for native probes.
+
+8.3) Debug launcher PATH sanitization
+
+In .vscode\launch.json, for the debug configuration used to run the app:
+Set env.Path to ONLY these, de-duplicated and in order:
+Portal V17\bin
+Portal V17\bin64 (if exists)
+PublicAPI\V17
+PublicAPI\V17\culture subfolders that exist (e.g., en-US)
+C:\Windows\System32
+C:\Windows
+C:\Dev\TIAExporter.venv\Scripts
+Remove C:\Eric\Software Installs\bin\ (and similar) from this debug PATH.
+This ensures native DLL lookup resolves Siemens binaries correctly.
+
+8.4) Attach-time guard and logging
+
+Immediately before calling TiaPortal.GetProcesses():
+Log first 10 entries of PATH in the running process.
+Log the resolved public_api_dir and derived Portal bin/bin64.
+Log existence and byte length of python.exe.config.
+On error: raise one concise error that prints these diagnostics in one shot.
+
+8.5) Order of operations (critical)
+
+Preferred order when launching under VS Code:
+a) Use python.exe.config already present (CLR binding happens at process start).
+b) Use a debug config that sets a sanitized env.Path for the debug process.
+c) Optionally install the AssemblyResolve loader at app start.
+d) Only then call TiaPortal.GetProcesses().
+
+=====================================================================
+9) Deliverables the next LLM must produce (D1–D4)
+Deliverable D1 — Config generator for python.exe.config
+
+A PowerShell patch that:
+
+Scans all fixed drives for Siemens.Engineering.dll under ...\PublicAPI\V17.
+Enumerates all Siemens.*.dll under that PublicAPI\V17 and its culture subfolders.
+Writes C:\Dev\TIAExporter.venv\Scripts\python.exe.config with one dependentAssembly per DLL using codeBase href="file:///...".
+Places Siemens.Engineering.dll first, then the rest alphabetical.
+Prints a summary (PublicAPI location, count of DLLs bound, first 10 PATH entries).
+
+
+
+Deliverable D2 — Sanitized VS Code launcher PATH
+
+A PowerShell patch that:
+
+Creates or updates .vscode\launch.json to include a configuration named e.g., "Python: TIAExporter (boot-first)".
+Ensures it launches module "tia_tags_exporter.app_boot" or the main entry point.
+Sets env.Path to only the Siemens bins, PublicAPI\V17 (+ cultures), Windows dirs, and venv Scripts.
+Removes C:\Eric\Software Installs\bin\ from env.Path.
+Prints PATH head to verify order.
+
+
+
+Deliverable D3 — Optional runtime loader module
+
+A Python module (e.g., loader_multi.py) that:
+
+Builds a managed DLL index across PublicAPI\V17 (+ cultures) with AssemblyName.GetAssemblyName.
+Installs strict AssemblyResolve that returns only from that index.
+Optionally preloads core + companion Siemens assemblies.
+Adds native bin/bin64 via os.add_dll_directory.
+
+
+
+Deliverable D4 — Attach-time diagnostics
+
+Minimal changes to log PATH head, confirm python.exe.config presence/size, and print coherent diagnostics if LocationProvider still fails.
+
+All patches must be idempotent, backup files with timestamps, and print “How to verify” steps.
+=====================================================================
+10) Acceptance Tests (must pass)
+
+Config generator prints discovered PublicAPI\V17 and writes python.exe.config with >= 6 Siemens.* DLL bindings.
+On app start under VS Code debug, PATH head prints with entries [0..2] as:
+0: Portal V17\bin
+1: PublicAPI\V17
+2: C:\Windows\System32 (or C:\Windows)
+With TIA Portal V17 open on a project, clicking Attach enumerates processes. No FileLoadException.
+Regression test: Move "C:\Eric\Software Installs\bin" earlier in User PATH; run via VS Code debug config with sanitized env.Path. Attach still succeeds because .config and sanitized PATH dominate.
+If PublicAPI\V17\en-US exists, loader resolves any satellites without errors.
+
+=====================================================================
+11) Troubleshooting Checklist and Signals to Log
+
+Full path to python.exe.config and its byte size; if attach fails, print the first ~20 lines of it.
+First 10 entries of PATH before calling GetProcesses().
+The exact PublicAPI\V17 path in use and whether culture subfolders were discovered.
+Confirm .NET Framework 4.8+ is installed.
+Confirm user is in Windows group “Siemens TIA Openness”.
+Confirm TIA Portal V17 is installed and a project is open when attaching.
+Print list or count of Siemens.* assemblies actually bound/loaded (names + paths) if failure persists.
+
+=====================================================================
+12) What NOT to do (anti-patterns)
+
+Do not rely solely on mutating PATH inside Python after imports start; TiaPortal’s static initializer can run before those changes matter.
+Do not load only Siemens.Engineering.dll and assume others will be correct; multiple companions are needed.
+Do not try to side-by-side load multiple major versions of Siemens.Engineering.* in the same python process.
+
+=====================================================================
+13) Machine-specific facts observed on Eric’s PC
+
+Actual V17 PublicAPI folder: C:\Siemens\Portal V17\PublicAPI\V17
+Portal bin folder: C:\Siemens\Portal V17\bin
+Potential bin64 folder: C:\Siemens\Portal V17\bin64 (may or may not exist)
+Offending PATH entry that must not win: C:\Eric\Software Installs\bin\
+
+=====================================================================
+14) Appendix A: Example python.exe.config with multiple Siemens DLLs
+File location: C:\Dev\TIAExporter.venv\Scripts\python.exe.config
+NOTE: This is an example. The codeBase href values must match your actual PublicAPI\V17 path.
+
+
+  
+    
+  <!-- Core first -->
+  <dependentAssembly>
+    <assemblyIdentity name="Siemens.Engineering" publicKeyToken="d29ec89bac048f84" culture="neutral" />
+    file:///C:/Siemens/Portal%20V17/PublicAPI/V17/Siemens.Engineering.dll
+  </dependentAssembly>
+
+  <!-- Common companions; add every Siemens.*.dll found in PublicAPI\V17 (+ cultures) -->
+  <dependentAssembly>
+    <assemblyIdentity name="Siemens.Engineering.Hmi" publicKeyToken="d29ec89bac048f84" culture="neutral" />
+    file:///C:/Siemens/Portal%20V17/PublicAPI/V17/Siemens.Engineering.Hmi.dll
+  </dependentAssembly>
+
+  <dependentAssembly>
+    <assemblyIdentity name="Siemens.Engineering.SW.Plc" publicKeyToken="d29ec89bac048f84" culture="neutral" />
+    file:///C:/Siemens/Portal%20V17/PublicAPI/V17/Siemens.Engineering.SW.Plc.dll
+  </dependentAssembly>
+
+  <dependentAssembly>
+    <assemblyIdentity name="Siemens.Engineering.HW" publicKeyToken="d29ec89bac048f84" culture="neutral" />
+    file:///C:/Siemens/Portal%20V17/PublicAPI/V17/Siemens.Engineering.HW.dll
+  </dependentAssembly>
+
+  <dependentAssembly>
+    <assemblyIdentity name="Siemens.Engineering.HW.Features" publicKeyToken="d29ec89bac048f84" culture="neutral" />
+    file:///C:/Siemens/Portal%20V17/PublicAPI/V17/Siemens.Engineering.HW.Features.dll
+  </dependentAssembly>
+
+  <dependentAssembly>
+    <assemblyIdentity name="Siemens.Engineering.SW" publicKeyToken="d29ec89bac048f84" culture="neutral" />
+    file:///C:/Siemens/Portal%20V17/PublicAPI/V17/Siemens.Engineering.SW.dll
+  </dependentAssembly>
+
+  <!-- Add any additional Siemens.*.dll present in PublicAPI\V17 and its culture subfolders. -->
+  <!-- Example for a satellite under en-US (only if file exists): -->
+  <!--
+  <dependentAssembly>
+    <assemblyIdentity name="Siemens.Engineering.SomeSatellite" publicKeyToken="d29ec89bac048f84" culture="neutral" />
+    file:///C:/Siemens/Portal%20V17/PublicAPI/V17/en-US/Siemens.Engineering.SomeSatellite.dll
+  </dependentAssembly>
+  -->
+
+</assemblyBinding>
+
+  
+
+=====================================================================
+15) Appendix B: Example minimal generator algorithm (pseudo-PowerShell)
+Inputs:
+
+Repo root: C:\Dev\TIAExporter
+Venv: C:\Dev\TIAExporter.venv\Scripts
+Target config: C:\Dev\TIAExporter.venv\Scripts\python.exe.config
+
+Algorithm:
+
+Search fixed drives for "Siemens.Engineering.dll" where path matches "*\PublicAPI\V17*".
+Choose candidate with best score: contains "\Portal V17", "\PublicAPI\V17", under "C:\Program Files" or "C:\Siemens".
+Set PublicAPI = directory of Siemens.Engineering.dll.
+Collect DLLs:
+
+All files matching "Siemens.*.dll" directly under PublicAPI.
+For each culture in [en-US, de-DE, fr-FR, es-ES, it-IT, pt-BR, ru-RU, pl-PL, cs-CZ, zh-CN, ja-JP, tr-TR, ko-KR]:
+If subfolder exists under PublicAPI, include all "Siemens.*.dll" within it.
+De-duplicate by full path (case-insensitive).
+
+
+Order list: Siemens.Engineering.dll first, then alphabetically by file name for the rest.
+For each file, write:
+
+
+file:///ABSOLUTE_PATH_WITH_FORWARD_SLASHES
+
+Write final XML and save as python.exe.config (backup existing).
+Print summary: PublicAPI path, count of DLLs bound, sample PATH head that should start with Portal V17\bin and PublicAPI\V17.
+
+=====================================================================
+16) Appendix C: Example Python AssemblyResolve loader outline
+Purpose:
+
+Strict resolution only from PublicAPI\V17 (+ cultures).
+Optional preload sequence.
+Add native directories for bin/bin64.
+
+Outline (pseudocode for pythonnet):
+
+Compute search_dirs = [PublicAPI\V17, PublicAPI\V17\cultures..., Portal V17\bin, Portal V17\bin64 (if exists)].
+For each d in search_dirs and file in d*.dll:
+try AssemblyName.GetAssemblyName(file) to confirm managed; index by (Name, Culture or "") -> path.
+Install AssemblyResolve handler (once):
+On request, resolve by exact name and culture from index; return Assembly.LoadFrom(path).
+Preload in order:
+Siemens.Engineering.dll; then all Siemens.Engineering.; then remaining Siemens..
+Native:
+For d in [Portal V17\bin, bin64], call os.add_dll_directory(d) and put them first on PATH for this process.
+
+=====================================================================
+17) Appendix D: Example VS Code launch.json snippet with clean PATH
+{
+"version": "0.2.0",
+"configurations": [
+{
+"name": "Python: TIAExporter (boot-first)",
+"type": "python",
+"request": "launch",
+"module": "tia_tags_exporter.app_boot",
+"console": "integratedTerminal",
+"env": {
+"Path": "C:\Siemens\Portal V17\bin;C:\Siemens\Portal V17\bin64;C:\Siemens\Portal V17\PublicAPI\V17;C:\Siemens\Portal V17\PublicAPI\V17\en-US;C:\Windows\System32;C:\Windows;C:\Dev\TIAExporter\.venv\Scripts"
+}
+}
+]
+}
+Adjust PublicAPI\V17 and culture subfolders as discovered. Omit bin64 or culture entries if the directories do not exist.
+=====================================================================
+18) References (Siemens official + community)
+Siemens FAQ 109038214 (explains using configuration file or AssemblyResolve for Openness binding and referencing multiple DLLs such as Siemens.Engineering.dll and Siemens.Engineering.HMI.dll):
+https://support.industry.siemens.com/cs/document/109038214/when-using-a-tia-portal-openness-application-why-do-you-get-the-error-message-cannot-connect-to-tia-portal-?dti=0&lc=en-WW
+Siemens AppNote 109815895 (PDF). Discusses referencing Siemens.Engineering assemblies and using AssemblyResolve at runtime to bind the suitable version:
+https://support.industry.siemens.com/cs/attachments/109815895/109815895_AssemblyResolve_V1_0_EN.pdf
+Community Python example that calls TiaPortal.GetProcesses() after loading Siemens.Engineering.dll (older version, useful for call shape reference, not complete for multi-DLL binding):
+https://github.com/Maroder1/Openness_examples_python/blob/master/Openness_examples_python.py
+Siemens forum thread exhibiting the same TypeInitializationException/FileLoadException pattern in Openness v18 (environment/binding issue):
+https://support.industry.siemens.com/forum/mz/en/posts/openness-excel-import-export-v18/294900/?page=0
+=====================================================================
+END OF ASCII CONTEXT PACK
