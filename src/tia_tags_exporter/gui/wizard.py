@@ -68,14 +68,14 @@ class DiscoveryWorker(QtCore.QThread):
         self._abort = True
 
 
-def _score_candidate(c: Candidate) -> int:
+def _score_candidate(c: Candidate, version: str = "V17") -> int:
     """Scoring for auto-pick/preselect."""
     base = {"exact": 100, "v17-path": 75, "good": 50, "heuristic": 25}.get(c.quality or "heuristic", 25)
     p = str(c.folder).lower().replace("/", "\\")
     bonus = 0
-    if p.endswith("\\publicapi\\v17"):
+    if p.endswith(f"\\publicapi\\{version.lower()}"):
         bonus += 15
-    if "portal v17" in p:
+    if f"portal {version.lower()}" in p:
         bonus += 10
     if "publicapi" in p:
         bonus += 5
@@ -97,9 +97,10 @@ class DllWizard(QtWidgets.QDialog):
       - Main results table shows full details; chooser pre-selects best.
     """
 
-    def __init__(self, store: ProfileStore, parent=None):
+    def __init__(self, store: ProfileStore, parent=None, version: str = "V17"):
         super().__init__(parent)
-        self.setWindowTitle("DLL Discovery & Configuration Wizard (V17)")
+        self.version = version
+        self.setWindowTitle(f"DLL Discovery & Configuration Wizard ({self.version})")
         self.resize(1200, 760)
         self.store = store
 
@@ -260,7 +261,7 @@ class DllWizard(QtWidgets.QDialog):
         cand.token = token
 
         prof = DllProfile(
-            tia_version="V17",
+            tia_version=self.version,
             public_api_dir=cand.folder,
             file_version=cand.version,
             public_key_token=token,
@@ -376,13 +377,13 @@ class DllWizard(QtWidgets.QDialog):
         # Rank all valid candidates
         ranked = sorted(
             self.valid_candidates,
-            key=lambda c: (_score_candidate(c), c.last_write or "", str(c.folder)),
+            key=lambda c: (_score_candidate(c, self.version), c.last_write or "", str(c.folder)),
             reverse=True
         )
 
         best = ranked[0]
-        best_score = _score_candidate(best)
-        second_score = _score_candidate(ranked[1]) if len(ranked) > 1 else -1
+        best_score = _score_candidate(best, self.version)
+        second_score = _score_candidate(ranked[1], self.version) if len(ranked) > 1 else -1
 
         # Auto-save only if unambiguous best; keep dialog open for visibility
         if len(ranked) == 1 or best_score > second_score:

@@ -1,0 +1,9 @@
+
+
+Databases Design First
+
+Two Distinct Segments:
+1. Game Databases
+2. Code Execution Modules
+
+Needs some sort of glue between 1 and 2 (Game Manager, Custom Scripts, etc)

@@ -5,7 +5,7 @@ from typing import Iterator, List, Optional
 
 from .validation import Candidate, validate_candidate, REQUIRED_DLLS, CORE_DLL_NAME
 
-KEYWORDS = ("siemens", "portal", "tia", "automation", "publicapi", "openness", "v17")
+KEYWORDS = ("siemens", "portal", "tia", "automation", "publicapi", "openness", "v17", "v18")
 ALWAYS_ALLOW_NAMES = {
     "program files",
     "program files (x86)",
@@ -129,13 +129,16 @@ def _candidate_roots(drive: Path) -> List[Path]:
         drive / "Program Files" / "Siemens",
         drive / "Program Files" / "Siemens" / "Automation",
         drive / "Program Files" / "Siemens" / "Automation" / "Portal V17",
+        drive / "Program Files" / "Siemens" / "Automation" / "Portal V18",
         drive / "Program Files (x86)" / "Siemens",
         drive / "Program Files (x86)" / "Siemens" / "Automation",
         drive / "ProgramData" / "Siemens",
         drive / "ProgramData" / "Siemens" / "Automation",
         drive / "ProgramData" / "Siemens" / "Automation" / "Portal V17",
+        drive / "ProgramData" / "Siemens" / "Automation" / "Portal V18",
         drive / "Siemens",
         drive / "Portal V17",
+        drive / "Portal V18",
         drive / "TIA Portal",
     ]
     for guess in base_guesses:
@@ -203,7 +206,9 @@ def discover_candidates(selected_drives: Optional[List[Path]] = None) -> Iterato
     for drive in drives:
         guesses.extend([
             drive / "Program Files" / "Siemens" / "Automation" / "Portal V17" / "PublicAPI" / "V17",
+            drive / "Program Files" / "Siemens" / "Automation" / "Portal V18" / "PublicAPI" / "V18",
             drive / "Program Files (x86)" / "Siemens" / "Automation" / "Portal V17" / "PublicAPI" / "V17",
+            drive / "Program Files (x86)" / "Siemens" / "Automation" / "Portal V18" / "PublicAPI" / "V18",
             drive / "ProgramData" / "Siemens",
         ])
 

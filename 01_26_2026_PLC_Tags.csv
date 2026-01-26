@@ -1,0 +1,207 @@
+ProjectName,PLC_Name,TagTable,TagName,DataType,Address,Comment,Retentive,Scope,TagId
+P24U1_OP6020,PC-System_1,Default tag table,m_SoftwarePLC_DisableFeature,,%M10000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:m_SoftwarePLC_DisableFeature
+P24U1_OP6020,PC-System_1,Default tag table,Tag_2,,%IB70,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_2
+P24U1_OP6020,PC-System_1,Default tag table,Tag_3,,%IB71,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_3
+P24U1_OP6020,PC-System_1,Default tag table,Tag_4,,%QB333,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_4
+P24U1_OP6020,PC-System_1,Default tag table,Tag_5,,%QB334,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_5
+P24U1_OP6020,PC-System_1,Default tag table,Tag_6,,%IB80,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_6
+P24U1_OP6020,PC-System_1,Default tag table,Tag_7,,%IB81,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_7
+P24U1_OP6020,PC-System_1,Default tag table,Tag_8,,%IB90,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_8
+P24U1_OP6020,PC-System_1,Default tag table,Tag_9,,%IB91,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_9
+P24U1_OP6020,PC-System_1,Default tag table,Tag_10,,%IB207,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_10
+P24U1_OP6020,PC-System_1,Default tag table,Tag_11,,%IB214,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_11
+P24U1_OP6020,PC-System_1,Default tag table,Tag_12,,%IB221,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_12
+P24U1_OP6020,PC-System_1,Default tag table,Tag_13,,%IB228,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_13
+P24U1_OP6020,PC-System_1,Default tag table,Tag_14,,%IB235,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_14
+P24U1_OP6020,PC-System_1,Default tag table,Tag_15,,%IB242,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_15
+P24U1_OP6020,PC-System_1,Default tag table,Tag_16,,%IB249,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_16
+P24U1_OP6020,PC-System_1,Default tag table,Tag_17,,%IB277,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_17
+P24U1_OP6020,PC-System_1,Default tag table,Tag_18,,%IB270,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_18
+P24U1_OP6020,PC-System_1,Default tag table,Tag_19,,%IB284,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_19
+P24U1_OP6020,PC-System_1,Default tag table,Tag_20,,%IB291,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_20
+P24U1_OP6020,PC-System_1,Default tag table,Tag_21,,%IB298,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_21
+P24U1_OP6020,PC-System_1,Default tag table,Tag_22,,%IB305,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_22
+P24U1_OP6020,PC-System_1,Default tag table,Tag_23,,%IB319,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_23
+P24U1_OP6020,PC-System_1,Default tag table,Tag_24,,%IB320,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_24
+P24U1_OP6020,PC-System_1,Default tag table,Tag_25,,%IB326,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_25
+P24U1_OP6020,PC-System_1,Default tag table,Tag_26,,%IB327,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_26
+P24U1_OP6020,PC-System_1,Default tag table,Tag_27,,%IB340,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_27
+P24U1_OP6020,PC-System_1,Default tag table,Tag_28,,%IB347,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_28
+P24U1_OP6020,PC-System_1,Default tag table,Tag_29,,%IB354,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_29
+P24U1_OP6020,PC-System_1,Default tag table,Tag_30,,%IB361,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_30
+P24U1_OP6020,PC-System_1,Default tag table,Tag_32,,%IB263,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_32
+P24U1_OP6020,PC-System_1,Default tag table,Tag_39,,%IB632,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_39
+P24U1_OP6020,PC-System_1,Default tag table,Tag_40,,%IB633,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_40
+P24U1_OP6020,PC-System_1,Default tag table,Tag_41,,%IB634,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_41
+P24U1_OP6020,PC-System_1,Default tag table,Tag_42,,%IB635,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_42
+P24U1_OP6020,PC-System_1,Default tag table,Tag_43,,%IB636,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_43
+P24U1_OP6020,PC-System_1,Default tag table,Tag_44,,%IB637,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_44
+P24U1_OP6020,PC-System_1,Default tag table,Tag_45,,%IB641,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_45
+P24U1_OP6020,PC-System_1,Default tag table,Tag_46,,%IB642,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_46
+P24U1_OP6020,PC-System_1,Default tag table,Tag_47,,%IB500,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_47
+P24U1_OP6020,PC-System_1,Default tag table,Tag_48,,%IB510,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_48
+P24U1_OP6020,PC-System_1,Default tag table,Tag_49,,%QB500,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_49
+P24U1_OP6020,PC-System_1,Default tag table,Tag_50,,%QB510,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_50
+P24U1_OP6020,PC-System_1,Default tag table,Tag_51,,%M50.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_51
+P24U1_OP6020,PC-System_1,Default tag table,Tag_52,,%IB640,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_52
+P24U1_OP6020,PC-System_1,Default tag table,Tag_53,,%IB8000,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_53
+P24U1_OP6020,PC-System_1,Default tag table,Tag_54,,%IB705,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_54
+P24U1_OP6020,PC-System_1,Default tag table,Tag_31,,%IB2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_31
+P24U1_OP6020,PC-System_1,Default tag table,Tag_1,,%T1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_1
+P24U1_OP6020,PC-System_1,Default tag table,Tag_33,,%M45.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_33
+P24U1_OP6020,PC-System_1,Default tag table,Tag_34,,%M40.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:Default tag table:Tag_34
+P24U1_OP6020,PC-System_1,input/Outputs,qS1_StackLight,,%Q401.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:qS1_StackLight
+P24U1_OP6020,PC-System_1,input/Outputs,iRemote_Inputs,,%I6710.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:iRemote_Inputs
+P24U1_OP6020,PC-System_1,input/Outputs,iRemote_Outputs,,%Q6710.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:iRemote_Outputs
+P24U1_OP6020,PC-System_1,input/Outputs,Camera-1Inputs,,%I9000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:Camera-1Inputs
+P24U1_OP6020,PC-System_1,input/Outputs,Camera-1Outputs,,%Q9000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:Camera-1Outputs
+P24U1_OP6020,PC-System_1,input/Outputs,iIPCHMIEstopPressed,,%I2500.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:iIPCHMIEstopPressed
+P24U1_OP6020,PC-System_1,input/Outputs,CognexDataMan_1_Inputs,,%I6000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:CognexDataMan_1_Inputs
+P24U1_OP6020,PC-System_1,input/Outputs,CognexDataMan_1_Outputs,,%Q6000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:CognexDataMan_1_Outputs
+P24U1_OP6020,PC-System_1,input/Outputs,AGVStationStopperInput,,%I16010.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:AGVStationStopperInput
+P24U1_OP6020,PC-System_1,input/Outputs,AGVStationStopperOutput,,%Q16010.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:AGVStationStopperOutput
+P24U1_OP6020,PC-System_1,input/Outputs,C1_SafeIn,,%I10000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:C1_SafeIn
+P24U1_OP6020,PC-System_1,input/Outputs,C1_SafeOut,,%Q10000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:C1_SafeOut
+P24U1_OP6020,PC-System_1,input/Outputs,C1_StdOut,,%Q10020.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:C1_StdOut
+P24U1_OP6020,PC-System_1,input/Outputs,C1_UserIn,,%Q10117.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:C1_UserIn
+P24U1_OP6020,PC-System_1,input/Outputs,C1_StdIn,,%I10020.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:C1_StdIn
+P24U1_OP6020,PC-System_1,input/Outputs,C1_UserOut,,%I10117.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:C1_UserOut
+P24U1_OP6020,PC-System_1,input/Outputs,S1_CognexDataMan_1_Inputs,,%I7000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:S1_CognexDataMan_1_Inputs
+P24U1_OP6020,PC-System_1,input/Outputs,S1_CognexDataMan_1_Outputs,,%Q7000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:S1_CognexDataMan_1_Outputs
+P24U1_OP6020,PC-System_1,input/Outputs,PowerFocus_1_Inputs,,%I12000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:PowerFocus_1_Inputs
+P24U1_OP6020,PC-System_1,input/Outputs,PowerFocus_1_Outputs,,%Q12000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:PowerFocus_1_Outputs
+P24U1_OP6020,PC-System_1,input/Outputs,Stop-B LJxCamerainput,,%I13500.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:Stop-B LJxCamerainput
+P24U1_OP6020,PC-System_1,input/Outputs,Stop-B LJxCameraOutput,,%Q13500.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:Stop-B LJxCameraOutput
+P24U1_OP6020,PC-System_1,input/Outputs,triger,,%M28.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:triger
+P24U1_OP6020,PC-System_1,input/Outputs,Area_Scanner-1_LSC01_In,,%I13000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:Area_Scanner-1_LSC01_In
+P24U1_OP6020,PC-System_1,input/Outputs,Area_Scanner-1_LSC01_Out,,%Q13000.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:Area_Scanner-1_LSC01_Out
+P24U1_OP6020,PC-System_1,input/Outputs,Area_Scanner-2_LSC01_In,,%I13020.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:Area_Scanner-2_LSC01_In
+P24U1_OP6020,PC-System_1,input/Outputs,Area_Scanner-2_LSC01_Out,,%Q13020.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:Area_Scanner-2_LSC01_Out
+P24U1_OP6020,PC-System_1,input/Outputs,PowerFocus_2_Inputs,,%I12300.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:PowerFocus_2_Inputs
+P24U1_OP6020,PC-System_1,input/Outputs,PowerFocus_2_Outputs,,%Q12300.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:PowerFocus_2_Outputs
+P24U1_OP6020,PC-System_1,input/Outputs,CognexDataMan_2_Inputs,,%I6100.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:CognexDataMan_2_Inputs
+P24U1_OP6020,PC-System_1,input/Outputs,CognexDataMan_2_Outputs,,%Q6100.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:input/Outputs:CognexDataMan_2_Outputs
+P24U1_OP6020,PC-System_1,memoryFlags,Req_PowOn,,%M902.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:Req_PowOn
+P24U1_OP6020,PC-System_1,memoryFlags,mdSafetyChecksum,,%MD12,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mdSafetyChecksum
+P24U1_OP6020,PC-System_1,memoryFlags,mwS1BadCount,,%MW22,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mwS1BadCount
+P24U1_OP6020,PC-System_1,memoryFlags,mwS1GoodCount,,%MW20,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mwS1GoodCount
+P24U1_OP6020,PC-System_1,memoryFlags,mwS1PassCount,,%MW24,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mwS1PassCount
+P24U1_OP6020,PC-System_1,memoryFlags,mwS1TotalCount,,%MW26,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mwS1TotalCount
+P24U1_OP6020,PC-System_1,memoryFlags,mwS2BadCount,,%MW42,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mwS2BadCount
+P24U1_OP6020,PC-System_1,memoryFlags,mwS2GoodCount,,%MW40,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mwS2GoodCount
+P24U1_OP6020,PC-System_1,memoryFlags,mwS2PassCount,,%MW44,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mwS2PassCount
+P24U1_OP6020,PC-System_1,memoryFlags,mwS2TotalCount,,%MW46,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mwS2TotalCount
+P24U1_OP6020,PC-System_1,memoryFlags,Safety_RdyToPowerOn,,%M900.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:Safety_RdyToPowerOn
+P24U1_OP6020,PC-System_1,memoryFlags,Checksum_OK,,%M902.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:Checksum_OK
+P24U1_OP6020,PC-System_1,memoryFlags,Power_Off_PB,,%M902.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:Power_Off_PB
+P24U1_OP6020,PC-System_1,memoryFlags,OB121_ProgramError,,%M16.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:OB121_ProgramError
+P24U1_OP6020,PC-System_1,memoryFlags,OB121_ProgramErrorCount,,%MW18,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:OB121_ProgramErrorCount
+P24U1_OP6020,PC-System_1,memoryFlags,SafetyResetAck,,%M903.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:SafetyResetAck
+P24U1_OP6020,PC-System_1,memoryFlags,SafetyResetOP,,%MW904,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:SafetyResetOP
+P24U1_OP6020,PC-System_1,memoryFlags,SafetyResetTrigger,,%M903.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:SafetyResetTrigger
+P24U1_OP6020,PC-System_1,memoryFlags,mSafeMove_Checksum,,%MD30,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:mSafeMove_Checksum
+P24U1_OP6020,PC-System_1,memoryFlags,ABB_FixMe,,%M34.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:ABB_FixMe
+P24U1_OP6020,PC-System_1,memoryFlags,Robot1_SwitchChkPosDwell,,%T57,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:Robot1_SwitchChkPosDwell
+P24U1_OP6020,PC-System_1,memoryFlags,Robot1_DelayRunChainTmr,,%T56,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:memoryFlags:Robot1_DelayRunChainTmr
+P24U1_OP6020,PC-System_1,MPS,ReplaceWith_Event_Start_Signal,,%M22.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:MPS:ReplaceWith_Event_Start_Signal
+P24U1_OP6020,PC-System_1,MPS,ReplaceWith_Event_Stop_Signal,,%M22.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:MPS:ReplaceWith_Event_Stop_Signal
+P24U1_OP6020,PC-System_1,MPS,Custom_Bool,,%M22.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:MPS:Custom_Bool
+P24U1_OP6020,PC-System_1,MPS,Custom_Int,,%MW23,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:MPS:Custom_Int
+P24U1_OP6020,PC-System_1,MPS,Custom_Time,,%MD4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:MPS:Custom_Time
+P24U1_OP6020,PC-System_1,system,m_clock_0.1sec,,%M1.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_clock_0.1sec
+P24U1_OP6020,PC-System_1,system,m_clock_0.2sec,,%M1.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_clock_0.2sec
+P24U1_OP6020,PC-System_1,system,mb_System_Byte,,%MB2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:mb_System_Byte
+P24U1_OP6020,PC-System_1,system,m_FirstScan,,%M2.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_FirstScan
+P24U1_OP6020,PC-System_1,system,m_DiagStatusUpdate,,%M2.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_DiagStatusUpdate
+P24U1_OP6020,PC-System_1,system,m_AlwaysTRUE,,%M2.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_AlwaysTRUE
+P24U1_OP6020,PC-System_1,system,m_AlwaysFALSE,,%M2.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_AlwaysFALSE
+P24U1_OP6020,PC-System_1,system,mb_clock_pulse,,%MB1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:mb_clock_pulse
+P24U1_OP6020,PC-System_1,system,m_clock_0.4sec,,%M1.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_clock_0.4sec
+P24U1_OP6020,PC-System_1,system,m_clock_0.5sec,,%M1.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_clock_0.5sec
+P24U1_OP6020,PC-System_1,system,m_clock_0.8sec,,%M1.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_clock_0.8sec
+P24U1_OP6020,PC-System_1,system,m_clock_1.0sec,,%M1.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_clock_1.0sec
+P24U1_OP6020,PC-System_1,system,m_clock_1.6sec,,%M1.6,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_clock_1.6sec
+P24U1_OP6020,PC-System_1,system,m_clock_2.0sec,,%M1.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_clock_2.0sec
+P24U1_OP6020,PC-System_1,system,ReplaceWithScannerCmd,,%M0.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:ReplaceWithScannerCmd
+P24U1_OP6020,PC-System_1,system,m_dummy2,,%M0.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_dummy2
+P24U1_OP6020,PC-System_1,system,m_dummy3,,%M0.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_dummy3
+P24U1_OP6020,PC-System_1,system,m_jumper,,%M0.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_jumper
+P24U1_OP6020,PC-System_1,system,m_newstart,,%M0.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_newstart
+P24U1_OP6020,PC-System_1,system,m_one,,%M0.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_one
+P24U1_OP6020,PC-System_1,system,m_zero,,%M0.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:system:m_zero
+P24U1_OP6020,PC-System_1,InputOutputs,iMotionSupplyNotEnabledCh-1_I50.0,,%I50.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iMotionSupplyNotEnabledCh-1_I50.0
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I50.1,,%I50.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I50.1
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I50.2,,%I50.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I50.2
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I50.3,,%I50.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I50.3
+P24U1_OP6020,PC-System_1,InputOutputs,iE1DisconnectOk_I10.0,,%I10.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iE1DisconnectOk_I10.0
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I10.1,,%I10.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I10.1
+P24U1_OP6020,PC-System_1,InputOutputs,iPanelAcOn_I10.2,,%I10.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iPanelAcOn_I10.2
+P24U1_OP6020,PC-System_1,InputOutputs,iLineSideSmps-1SurgeProtectorFdbk_I10.3,,%I10.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iLineSideSmps-1SurgeProtectorFdbk_I10.3
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I10.4,,%I10.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I10.4
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I10.5,,%I10.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I10.5
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I10.6,,%I10.6,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I10.6
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I10.7,,%I10.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I10.7
+P24U1_OP6020,PC-System_1,InputOutputs,iLoadSideSmps-1SurgeProtectorFdbk_I11.0,,%I11.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iLoadSideSmps-1SurgeProtectorFdbk_I11.0
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I11.1,,%I11.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I11.1
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I11.2,,%I11.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I11.2
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I11.3,,%I11.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I11.3
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I11.4,,%I11.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I11.4
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I11.5,,%I11.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I11.5
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I11.6,,%I11.6,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I11.6
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I11.7,,%I11.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I11.7
+P24U1_OP6020,PC-System_1,InputOutputs,iLineSideMurrModule1Fdbk_I12.0,,%I12.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iLineSideMurrModule1Fdbk_I12.0
+P24U1_OP6020,PC-System_1,InputOutputs,iLineSideMurrModule2Fdbk_I12.1,,%I12.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iLineSideMurrModule2Fdbk_I12.1
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I12.2,,%I12.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I12.2
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I12.3,,%I12.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I12.3
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I12.4,,%I12.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I12.4
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I12.5,,%I12.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I12.5
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I12.6,,%I12.6,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I12.6
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I12.7,,%I12.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I12.7
+P24U1_OP6020,PC-System_1,InputOutputs,iLoadSideMurrModule1Fdbk_I13.0,,%I13.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iLoadSideMurrModule1Fdbk_I13.0
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I13.1,,%I13.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I13.1
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I13.2,,%I13.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I13.2
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I13.3,,%I13.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I13.3
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I13.4,,%I13.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I13.4
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I13.5,,%I13.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I13.5
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I13.6,,%I13.6,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I13.6
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I13.7,,%I13.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I13.7
+P24U1_OP6020,PC-System_1,InputOutputs,iVisionCalibrationPlatePosition_I101.0,,%I101.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iVisionCalibrationPlatePosition_I101.0
+P24U1_OP6020,PC-System_1,InputOutputs,iBonusPartParking_I101.1,,%I101.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iBonusPartParking_I101.1
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I101.2,,%I101.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I101.2
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I101.3,,%I101.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I101.3
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I101.4,,%I101.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I101.4
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I101.5,,%I101.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I101.5
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I101.6,,%I101.6,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I101.6
+P24U1_OP6020,PC-System_1,InputOutputs,iAuthorization-1_I101.7,,%I101.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iAuthorization-1_I101.7
+P24U1_OP6020,PC-System_1,InputOutputs,iNutRunner-1AtParking_I102.0,,%I102.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iNutRunner-1AtParking_I102.0
+P24U1_OP6020,PC-System_1,InputOutputs,iSpindle-1AtParkingPosition_I102.1,,%I102.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpindle-1AtParkingPosition_I102.1
+P24U1_OP6020,PC-System_1,InputOutputs,iNutRunner-2AtParking_I102.2,,%I102.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iNutRunner-2AtParking_I102.2
+P24U1_OP6020,PC-System_1,InputOutputs,iSpindle-2AtParkingPosition_I102.3,,%I102.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpindle-2AtParkingPosition_I102.3
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I102.4,,%I102.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I102.4
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I102.5,,%I102.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I102.5
+P24U1_OP6020,PC-System_1,InputOutputs,iAuthorization-2_I102.6,,%I102.6,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iAuthorization-2_I102.6
+P24U1_OP6020,PC-System_1,InputOutputs,iAuthorization-3_I102.7,,%I102.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iAuthorization-3_I102.7
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I433.0,,%I433.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I433.0
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I433.1,,%I433.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I433.1
+P24U1_OP6020,PC-System_1,InputOutputs,iCobot-1EstopCh-1_I433.2,,%I433.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iCobot-1EstopCh-1_I433.2
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I433.3,,%I433.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I433.3
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I434.0,,%I434.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I434.0
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I435.0,,%I435.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I435.0
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I434.1,,%I434.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I434.1
+P24U1_OP6020,PC-System_1,InputOutputs,iSpare_I435.1,,%I435.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:iSpare_I435.1
+P24U1_OP6020,PC-System_1,InputOutputs,qMotionEnableContactor-1On_Q71.0,,%Q71.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qMotionEnableContactor-1On_Q71.0
+P24U1_OP6020,PC-System_1,InputOutputs,qMotionEnableContactor-2On_Q71.1,,%Q71.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qMotionEnableContactor-2On_Q71.1
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q71.2,,%Q71.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q71.2
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q71.3,,%Q71.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q71.3
+P24U1_OP6020,PC-System_1,InputOutputs,qCamera-1Light-1On_Q152.0,,%Q152.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qCamera-1Light-1On_Q152.0
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q152.1,,%Q152.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q152.1
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q152.2,,%Q152.2,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q152.2
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q152.3,,%Q152.3,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q152.3
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q152.4,,%Q152.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q152.4
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q152.5,,%Q152.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q152.5
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q152.6,,%Q152.6,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q152.6
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q152.7,,%Q152.7,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q152.7
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q433.4,,%Q433.4,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q433.4
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q433.5,,%Q433.5,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q433.5
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q436.0,,%Q436.0,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q436.0
+P24U1_OP6020,PC-System_1,InputOutputs,qSpare_Q436.1,,%Q436.1,Siemens.Engineering.MultilingualText,FALSE,Global,PC-System_1:InputOutputs:qSpare_Q436.1

@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+import functools
 import re
 import sys
 from collections.abc import Iterable
@@ -65,13 +64,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         super().__init__()
 
-        self.setWindowTitle("TIA Tags Exporter (V17)")
+        self.setWindowTitle("TIA Tags Exporter")
 
         self.resize(900, 600)
 
         self.store = store
 
-        self.prof: DllProfile | None = store.get_profile("V17")
+        self.prof: DllProfile | None = store.get_profile("V18") or store.get_profile(
+            "V17"
+        )
 
         # UI
 
@@ -104,14 +105,23 @@ class MainWindow(QtWidgets.QMainWindow):
             "QFrame#profileIndicator { border: 1px solid #404040; border-radius: 6px; background-color: #c0392b; }"
         )
 
-        self.btnWizard = QtWidgets.QPushButton("Run DLL Wizard.")
-        self.btnWizard.clicked.connect(self.on_wizard)
+        self.btnWizardV17 = QtWidgets.QPushButton("Run DLL Wizard for V17...")
+        self.btnWizardV17.clicked.connect(functools.partial(self.on_wizard, "V17"))
 
-        self.btnAttach = QtWidgets.QPushButton("Attach to TIA V17.")
-        self.btnAttach.clicked.connect(self.on_attach)
+        self.btnWizardV18 = QtWidgets.QPushButton("Run DLL Wizard for V18...")
+        self.btnWizardV18.clicked.connect(functools.partial(self.on_wizard, "V18"))
 
-        self.plcList = QtWidgets.QListWidget()
-        self.plcList.setSelectionMode(
+        self.btnAttachV17 = QtWidgets.QPushButton("Attach to TIA V17...")
+        self.btnAttachV17.clicked.connect(functools.partial(self.on_attach, "V17"))
+
+        self.btnAttachV18 = QtWidgets.QPushButton("Attach to TIA V18...")
+        self.btnAttachV18.clicked.connect(functools.partial(self.on_attach, "V18"))
+
+        self.btnDetach = QtWidgets.QPushButton("Detach from TIA")
+        self.btnDetach.clicked.connect(self.on_detach)
+
+        self.deviceList = QtWidgets.QListWidget()
+        self.deviceList.setSelectionMode(
             QtWidgets.QAbstractItemView.SelectionMode.MultiSelection
         )
 
@@ -124,7 +134,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chkAddress = QtWidgets.QCheckBox("Include Address")
         self.chkAddress.setChecked(True)
 
-        self.btnExport = QtWidgets.QPushButton("Export PLC Tags")
+        self.btnExport = QtWidgets.QPushButton("Export Controller Tags")
         self.btnExport.clicked.connect(self.on_export)
 
         self.cmbExportFormat = QtWidgets.QComboBox()
@@ -157,7 +167,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btnExportHmi = QtWidgets.QPushButton("Export HMI Information")
         self.btnExportHmi.clicked.connect(self.on_export_hmi)
 
-        self.btnExportDevicesNetworks = QtWidgets.QPushButton("Export Devices & Networks")
+        self.btnExportDevicesNetworks = QtWidgets.QPushButton(
+            "Export Devices & Networks"
+        )
         self.btnExportDevicesNetworks.clicked.connect(self.on_export_devices_networks)
 
         self.cmbDevicesNetworksFormat = QtWidgets.QComboBox()
@@ -184,9 +196,21 @@ class MainWindow(QtWidgets.QMainWindow):
         profile_row.addStretch(1)
         layout.addLayout(profile_row)
 
-        layout.addWidget(self.btnWizard)
-        layout.addWidget(self.btnAttach)
-        layout.addWidget(self.plcList)
+        wizard_row = QtWidgets.QHBoxLayout()
+        wizard_row.addWidget(self.btnWizardV17)
+        wizard_row.addWidget(self.btnWizardV18)
+        wizard_row.addStretch(1)
+        layout.addLayout(wizard_row)
+
+        attach_row = QtWidgets.QHBoxLayout()
+        attach_row.addWidget(self.btnAttachV17)
+        attach_row.addWidget(self.btnAttachV18)
+        attach_row.addSpacing(20)
+        attach_row.addWidget(self.btnDetach)
+        attach_row.addStretch(1)
+        layout.addLayout(attach_row)
+
+        layout.addWidget(self.deviceList)
         layout.addWidget(self.chkComments)
         layout.addWidget(self.chkRetentive)
         layout.addWidget(self.chkAddress)
@@ -207,10 +231,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.refresh_profile_label()
 
     def refresh_profile_label(self):
-
         prof = self.prof
-        if prof and prof.public_api_dir:
-            self.lblProfile.setText(f"Profile: V17 @ {prof.public_api_dir}")
+        if prof and prof.public_api_dir and prof.tia_version:
+            self.lblProfile.setText(
+                f"Profile: {prof.tia_version} @ {prof.public_api_dir}"
+            )
             ready = True
         else:
             self.lblProfile.setText("Profile: not set")
@@ -287,10 +312,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 app.setPalette(app.style().standardPalette())
             app.setStyleSheet(self._original_style_sheet or "")
 
-    def on_wizard(self):
+    def on_wizard(self, version: str = "V17"):
 
         if self._wizard_window is None:
-            self._wizard_window = DllWizardWindow(self.store, self)
+            self._wizard_window = DllWizardWindow(self.store, self, version=version)
             self._wizard_window.profile_updated.connect(self._on_wizard_profile_updated)
             self._wizard_window.destroyed.connect(self._on_wizard_closed)
         self._wizard_window.show()
@@ -298,31 +323,33 @@ class MainWindow(QtWidgets.QMainWindow):
         self._wizard_window.activateWindow()
 
     def _on_wizard_profile_updated(self) -> None:
-        self.prof = self.store.get_profile("V17")
+        self.prof = self.store.get_profile("V18") or self.store.get_profile("V17")
         self.refresh_profile_label()
 
     def _on_wizard_closed(self) -> None:
         self._wizard_window = None
 
-    def on_attach(self):
+    def on_attach(self, version: str):
 
         # Revalidate profile just before attach
+        prof = self.store.get_profile(version)
 
-        if not self.prof or not self.prof.public_api_dir:
+        if not prof or not prof.public_api_dir:
+            reply = QtWidgets.QMessageBox.question(
+                self,
+                "Profile not found",
+                f"Profile for {version} is not set.\n"
+                f"Run the DLL Wizard first to select the Siemens.Engineering.dll for {version}."
+                f"\n\nWould you like to run the wizard now?",
+                QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+                QtWidgets.QMessageBox.StandardButton.Yes,
+            )
+            if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+                self.on_wizard(version)
+            return
 
-            # Try to reload in case it was saved while this window was open
-
-            self.prof = self.store.get_profile("V17")
-
-            if not self.prof or not self.prof.public_api_dir:
-
-                QtWidgets.QMessageBox.warning(
-                    self,
-                    "Profile",
-                    "Run the DLL Wizard first to select Siemens.Engineering.dll.",
-                )
-
-                return
+        self.prof = prof
+        self.refresh_profile_label()
 
         # Load CLR/Siemens.Engineering
 
@@ -347,7 +374,7 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.information(
                 self,
                 "Attach",
-                "No running TIA Portal instances found.\nStart TIA V17 with a project open, then retry.",
+                f"No running TIA Portal instances found.\nStart TIA {version} with a project open, then retry.",
             )
 
             return
@@ -355,7 +382,7 @@ class MainWindow(QtWidgets.QMainWindow):
         items = [f"{i.index}: {i.description}" for i in instances]
 
         choice, ok = QtWidgets.QInputDialog.getItem(
-            self, "Attach", "Select TIA instance:", items, 0, False
+            self, "Attach", f"Select TIA {version} instance:", items, 0, False
         )
 
         if not ok:
@@ -400,27 +427,36 @@ class MainWindow(QtWidgets.QMainWindow):
 
             extr = TagExtractor(self._session)
 
-            plcs = extr.list_plcs()
+            controllers = extr.list_controllers()
 
         except Exception as e:
 
             QtWidgets.QMessageBox.critical(
-                self, "PLC Discovery", f"Failed to enumerate PLCs:\n{e}"
+                self, "Controller Discovery", f"Failed to enumerate controllers:\n{e}"
             )
 
             return
 
-        self.plcList.clear()
+        self.deviceList.clear()
 
-        for p in plcs:
+        for c in controllers:
 
-            self.plcList.addItem(p)
+            self.deviceList.addItem(c)
 
-        if not plcs:
+        if not controllers:
 
             self.log.append(
-                "No PLCs exposing PlcSoftware/TagTableGroup were found in this project."
+                "No controllers (e.g. PLCs, IPCs with software controllers) were found in this project."
             )
+
+    def on_detach(self):
+        if self._session:
+            self._session.detach()
+            self._session = None
+            self.deviceList.clear()
+            self.log.append("Detached.")
+        else:
+            self.log.append("Not attached.")
 
     def on_export(self):
 
@@ -428,7 +464,7 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.warning(self, "Attach", "Attach to TIA first.")
             return
 
-        selected = [i.text() for i in self.plcList.selectedItems()] or None
+        selected = [i.text() for i in self.deviceList.selectedItems()] or None
         extr = TagExtractor(self._session)
         rows = list(extr.extract_tags(selected))
         if not rows:
@@ -538,7 +574,7 @@ class MainWindow(QtWidgets.QMainWindow):
             )
             return
 
-        selected = [i.text() for i in self.plcList.selectedItems()] or None
+        selected = [i.text() for i in self.deviceList.selectedItems()] or None
         extractor = DevicesNetworksExporter(self._session)
         try:
             rows = extractor.extract_devices_networks(selected)
@@ -552,7 +588,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if not rows:
             QtWidgets.QMessageBox.information(
-                self, "Export Devices & Networks", "No devices and networks found to export."
+                self,
+                "Export Devices & Networks",
+                "No devices and networks found to export.",
             )
             return
 
@@ -580,7 +618,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if fmt == "csv":
             out, _ = QtWidgets.QFileDialog.getSaveFileName(
-                self, "Save Devices & Networks CSV", "Devices_Networks.csv", "CSV (*.csv)"
+                self,
+                "Save Devices & Networks CSV",
+                "Devices_Networks.csv",
+                "CSV (*.csv)",
             )
             if not out:
                 return
@@ -655,7 +696,7 @@ class MainWindow(QtWidgets.QMainWindow):
             )
             return
 
-        selected = [i.text() for i in self.plcList.selectedItems()] or None
+        selected = [i.text() for i in self.deviceList.selectedItems()] or None
         extractor = ProgramBlockExtractor(self._session)
         try:
             rows, sources = extractor.extract_blocks(selected)

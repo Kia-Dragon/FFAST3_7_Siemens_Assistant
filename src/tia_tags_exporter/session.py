@@ -59,6 +59,16 @@ class TiaSession:
         else:
             self._project = None
 
+    def detach(self) -> None:
+        if self._tia:
+            try:
+                self._tia.Dispose()
+            except Exception:
+                # Ignore errors during dispose
+                pass
+        self._tia = None
+        self._project = None
+
     @property
     def project_name(self) -> Optional[str]:
         if self._project is None:

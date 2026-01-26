@@ -47,25 +47,27 @@ class TagExtractor:
     def __init__(self, tia_session: Any) -> None:
         self.sess = tia_session
 
-    def list_plcs(self) -> List[str]:
+    def list_controllers(self) -> List[str]:
         service_provider, software_container = _load_openness_types()
 
         devices = list(getattr(self.sess.project, "Devices", []))
-        plcs: List[str] = []
+        controllers: List[str] = []
         for dev in devices:
-            device_items = getattr(dev, "DeviceItems", None)
-            if not device_items:
-                continue
-            try:
-                container = service_provider(device_items[1]).GetService[software_container]()
-            except Exception:
-                continue
-            software = getattr(container, "Software", None)
-            if software and hasattr(software, "TagTableGroup"):
-                name = getattr(dev, "Name", None)
-                if name:
-                    plcs.append(str(name))
-        return plcs
+            device_items = getattr(dev, "DeviceItems", [])
+            for item in device_items:
+                try:
+                    container = service_provider(item).GetService[software_container]()
+                except Exception:
+                    continue
+                software = getattr(container, "Software", None)
+                if software and hasattr(software, "TagTableGroup"):
+                    name = getattr(dev, "Name", None)
+                    if name:
+                        controllers.append(str(name))
+                        # Once we've found the software for this device,
+                        # we can break and move to the next device.
+                        break
+        return controllers
 
     def extract_tags(self, plc_filter: Optional[List[str]] = None) -> Iterator[TagRow]:
         service_provider, software_container = _load_openness_types()
@@ -82,13 +84,21 @@ class TagExtractor:
             device_items = getattr(dev, "DeviceItems", None)
             if not device_items:
                 continue
-            try:
-                container = service_provider(device_items[1]).GetService[software_container]()
-            except Exception:
+            software = None
+            for item in device_items:
+                try:
+                    container = service_provider(item).GetService[software_container]()
+                    if container:
+                        sw = getattr(container, "Software", None)
+                        if sw and hasattr(sw, "TagTableGroup"):
+                            software = sw
+                            break
+                except Exception:
+                    continue
+            
+            if software is None:
                 continue
-            if container is None:
-                continue
-            software = getattr(container, "Software", None)
+
             tag_group = getattr(software, "TagTableGroup", None)
             if not tag_group:
                 continue

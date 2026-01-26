@@ -70,26 +70,59 @@ class DevicesNetworksExporter:
             try:
                 network_interface = device_item.GetService[self._network_interface_type]()
                 if network_interface:
-                    for node in self._iter_collection(getattr(network_interface, "Nodes", None)):
-                        address = self._safe_str(node.GetAttribute(ADDRESS_ATTRIBUTE))
-                        subnet = getattr(node, CONNECTED_SUBNET_ATTRIBUTE, None)
-                        subnet_name = self._safe_str(getattr(subnet, NAME_ATTRIBUTE, ""))
-                        io_system = getattr(node, IO_SYSTEM_ATTRIBUTE, None)
-                        io_system_name = self._safe_str(getattr(io_system, NAME_ATTRIBUTE, ""))
-                        
-                        rows.append(
-                            DevicesNetworksRow(
-                                ProjectName=project_name,
-                                DeviceName=device_name,
-                                DeviceType=device_type,
-                                NetworkInterface=self._safe_str(getattr(device_item, NAME_ATTRIBUTE, "")),
-                                NodeAddress=address,
-                                SubnetName=subnet_name,
-                                IoSystemName=io_system_name,
+                    address_found = False
+                    # Method 1: For PC-Stations/IPCs, get address directly from the interface device item.
+                    try:
+                        address = self._safe_str(device_item.GetAttribute(ADDRESS_ATTRIBUTE))
+                        if address and address != "0.0.0.0":
+                            subnet_name = ""
+                            nodes = list(self._iter_collection(getattr(network_interface, "Nodes", None)))
+                            if nodes:
+                                subnet = getattr(nodes[0], CONNECTED_SUBNET_ATTRIBUTE, None)
+                                subnet_name = self._safe_str(getattr(subnet, NAME_ATTRIBUTE, ""))
+                            
+                            rows.append(
+                                DevicesNetworksRow(
+                                    ProjectName=project_name,
+                                    DeviceName=device_name,
+                                    DeviceType=device_type,
+                                    NetworkInterface=self._safe_str(getattr(device_item, NAME_ATTRIBUTE, "")),
+                                    NodeAddress=address,
+                                    SubnetName=subnet_name,
+                                    IoSystemName="",
+                                )
                             )
-                        )
-            except (AttributeError, TypeError):
-                # Ignore exceptions during service retrieval
+                            address_found = True
+                    except Exception:
+                        # This method failed, it's probably not a PC station interface.
+                        address_found = False
+
+                    # Method 2: For PLCs, get address from the nodes.
+                    if not address_found:
+                        for node in self._iter_collection(getattr(network_interface, "Nodes", None)):
+                            try:
+                                address = self._safe_str(node.GetAttribute(ADDRESS_ATTRIBUTE))
+                                subnet = getattr(node, CONNECTED_SUBNET_ATTRIBUTE, None)
+                                subnet_name = self._safe_str(getattr(subnet, NAME_ATTRIBUTE, ""))
+                                io_system = getattr(node, IO_SYSTEM_ATTRIBUTE, None)
+                                io_system_name = self._safe_str(getattr(io_system, NAME_ATTRIBUTE, ""))
+                                
+                                rows.append(
+                                    DevicesNetworksRow(
+                                        ProjectName=project_name,
+                                        DeviceName=device_name,
+                                        DeviceType=device_type,
+                                        NetworkInterface=self._safe_str(getattr(device_item, NAME_ATTRIBUTE, "")),
+                                        NodeAddress=address,
+                                        SubnetName=subnet_name,
+                                        IoSystemName=io_system_name,
+                                    )
+                                )
+                            except Exception:
+                                # This specific node failed, but others in the list might work.
+                                continue
+            except Exception:
+                # GetService failed, or some other issue. This item is not a network interface.
                 pass
 
         # Recursive call for sub-items

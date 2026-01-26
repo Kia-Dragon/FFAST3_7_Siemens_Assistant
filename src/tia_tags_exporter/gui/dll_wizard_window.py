@@ -12,10 +12,11 @@ class DllWizardWindow(QtWidgets.QMainWindow):
 
     profile_updated = QtCore.Signal()
 
-    def __init__(self, store, parent: Optional[QtWidgets.QWidget] = None) -> None:
+    def __init__(self, store, parent: Optional[QtWidgets.QWidget] = None, version: str = "V17") -> None:
         super().__init__(parent)
         self.store = store
-        self.setWindowTitle("DLL Discovery & Tutorial")
+        self.version = version
+        self.setWindowTitle(f"DLL Discovery & Tutorial ({version})")
         self.resize(1000, 700)
 
         central = QtWidgets.QWidget(self)
@@ -39,7 +40,7 @@ class DllWizardWindow(QtWidgets.QMainWindow):
             "<ol>"
             "<li>Ensure TIA Portal is installed and closed.</li>"
             "<li>Review the Siemens support article for Openness DLL locations.</li>"
-            "<li>Press <b>Run Discovery</b> to enumerate candidate folders.</li>"
+            f"<li>Press <b>Run Discovery</b> to enumerate candidate folders for {version}.</li>"
             "<li>Confirm the suggested profile, then close the wizard to return here.</li>"
             "</ol>"
             "Updated guidance will appear here as the tutorial is authored."
@@ -49,7 +50,7 @@ class DllWizardWindow(QtWidgets.QMainWindow):
         right_panel = QtWidgets.QWidget()
         right_layout = QtWidgets.QVBoxLayout(right_panel)
 
-        self.runButton = QtWidgets.QPushButton("Run Discovery Wizard...")
+        self.runButton = QtWidgets.QPushButton(f"Run Discovery Wizard for {version}...")
         self.closeButton = QtWidgets.QPushButton("Close")
         self.runButton.clicked.connect(self.launch_wizard)
         self.closeButton.clicked.connect(self.close)
@@ -69,9 +70,9 @@ class DllWizardWindow(QtWidgets.QMainWindow):
         splitter.setStretchFactor(1, 3)
 
     def launch_wizard(self) -> None:
-        self.statusLog.append("Launching DLL discovery wizard...")
+        self.statusLog.append(f"Launching DLL discovery wizard for {self.version}...")
         try:
-            wizard = DllWizard(self.store, self)
+            wizard = DllWizard(self.store, self, version=self.version)
             result = wizard.exec()
             self.statusLog.append("Wizard finished with code: {}".format(result))
         finally:

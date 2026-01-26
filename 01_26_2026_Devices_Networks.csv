@@ -1,0 +1,10 @@
+ProjectName,DeviceName,DeviceType,NetworkInterface,NodeAddress,SubnetName,IoSystemName
+P24U1_OP6020,PC-System_1,OrderNumber:6AV7252-yyxxx-xxxx//Device.19inch.ProMultiTouch,Rt Vmm Interface,192.168.73.2,SWCPU-internal subnet_2,
+P24U1_OP6020,PC-System_1,OrderNumber:6AV7252-yyxxx-xxxx//Device.19inch.ProMultiTouch,PROFINET interface,172.16.192.23,PN/IE_1,
+P24U1_OP6020,PC-System_1,OrderNumber:6AV7252-yyxxx-xxxx//Device.19inch.ProMultiTouch,PROFINET interface,10.50.11.21,,
+P24U1_OP6020,PC-System_1,OrderNumber:6AV7252-yyxxx-xxxx//Device.19inch.ProMultiTouch,Runtime communication interface_1,192.168.73.1,SWCPU-internal subnet_2,
+P24U1_OP6020,PC-System_1,OrderNumber:6AV7252-yyxxx-xxxx//Device.19inch.ProMultiTouch,AB01.6020.1A-EIPC-10002,10.50.192.20,PN/IE_1,
+P24U1_OP6020,PC-System_1,OrderNumber:6AV7252-yyxxx-xxxx//Device.19inch.ProMultiTouch,PROFINET interface,172.16.7.25,,
+P24U1_OP6020,SCALANCE XP-200,System:Device.Scalance/XP200,SCALANCE interface_1,10.50.192.2,PN/IE_1,
+P24U1_OP6020,SCALANCE XC-200,System:Device.Scalance/XC200,SCALANCE interface_1,10.50.192.1,PN/IE_1,
+P24U1_OP6020,SCALANCE XP-200_1,System:Device.Scalance/XP200,SCALANCE interface_1,10.50.192.3,PN/IE_1,

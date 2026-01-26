@@ -102,29 +102,19 @@ class ProgramBlockExtractor:
             return None
         provider_type, container_type = types
 
-        items = getattr(device, "DeviceItems", None)
-        if not items:
-            return None
-
-        entry: Any = None
-        try:
-            entry = items[1]
-        except Exception:
-            pass
-        if entry is None:
+        device_items = getattr(device, "DeviceItems", [])
+        for item in device_items:
             try:
-                entry = next(iter(items))
+                provider = provider_type(item)
+                container = provider.GetService[container_type]()
+                if container:
+                    software = getattr(container, "Software", None)
+                    # We are looking for PlcSoftware, which has a BlockGroup.
+                    if software and (hasattr(software, "BlockGroup") or hasattr(software, "ProgramBlocks")):
+                        return software
             except Exception:
-                entry = None
-        if entry is None:
-            return None
-
-        try:
-            provider = provider_type(entry)
-            container = provider.GetService[container_type]()
-            return getattr(container, "Software", None) if container else None
-        except Exception:
-            return None
+                continue
+        return None
 
     def _iter_collection(self, collection) -> Iterable[object]:
         if collection is None:
