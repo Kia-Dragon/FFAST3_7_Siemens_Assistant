@@ -1,65 +1,129 @@
-# TIA Tags Exporter (V17)
+# FFAST3.7 Siemens Assistant — TIA Tags Exporter
 
-A Windows desktop tool that:
+A Windows desktop GUI for extracting data from **Siemens TIA Portal V17 / V18** projects via the Openness API. Attach to a running TIA Portal instance, select devices, and export to Excel, CSV, or Google Sheets.
 
-1. Discovers **Siemens TIA Openness** assemblies (e.g., `Siemens.Engineering.dll`) anywhere on your machine.
-2. Attaches to a **running TIA Portal V17** instance.
-3. Extracts **PLC Tag Tables** (name, type, address if present, comment, retentive) and writes a compact **Excel** workbook.
+## Features
 
-## How to Run
+- **DLL Discovery Wizard** — automatically locates Siemens Openness assemblies across all fixed drives, with quality scoring and multi-folder resolution
+- **TIA Portal V17 & V18** — profile-based support for both versions with one-click switching
+- **Controller Tags Export** — PLC tag tables with optional comment, retentive, and address columns
+- **Program Blocks Export** — block metadata and source code files (OB, FB, FC, DB)
+- **HMI Information Export** — WinCC text lists, screens, alarms, and recipes as raw AML or flattened Excel
+- **Devices & Networks Export** — device names, types, IP addresses, subnets, and IO systems
+- **Output Formats** — Excel (.xlsx), CSV, and Google Sheets (with sharing)
+- **Dark Mode** — toggle between light and dark themes
 
-To run the application, you must first activate the Python virtual environment (`.venv`). The command differs depending on your terminal. These commands should be run from the project root directory.
+## Requirements
 
-### If using PowerShell
+| Requirement | Version |
+|---|---|
+| Windows | 10 or 11 (x64) |
+| Python | 3.12 x64 |
+| .NET Framework | 4.8+ |
+| TIA Portal | V17 or V18 with Openness installed |
 
-1.  **Create and activate the environment:**
-    ```powershell
-    # Create the virtual environment (only needs to be done once)
-    py -3.12 -m venv .venv
-    
-    # Activate the virtual environment
-    .\.venv\Scripts\activate.ps1
-    ```
+Your Windows user account must be a member of the **"Siemens TIA Openness"** group.
 
-2.  **Install dependencies (only needs to be done once):**
-    ```powershell
-    pip install -r requirements.txt
-    ```
+## Installation
 
-3.  **Run the application:**
-    ```powershell
-    python -m tia_tags_exporter.app
-    ```
+### PowerShell
 
-> **Note:** If activation fails with an error about scripts being disabled, you may need to adjust your PowerShell execution policy. Run this command once to allow local scripts, then try activating again:
+```powershell
+# Create the virtual environment (once)
+py -3.12 -m venv .venv
+
+# Activate
+.\.venv\Scripts\activate.ps1
+
+# Install dependencies (once)
+pip install -r requirements.txt
+```
+
+> If activation fails with a script execution error, run once:
 > ```powershell
 > Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 > ```
 
-### If using Command Prompt (cmd.exe)
+### Command Prompt (cmd.exe)
 
-1.  **Create and activate the environment:**
-    ```cmd
-    :: Create the virtual environment (only needs to be done once)
-    py -3.12 -m venv .venv
+```cmd
+:: Create the virtual environment (once)
+py -3.12 -m venv .venv
 
-    :: Activate the virtual environment
-    .\.venv\Scripts\activate.bat
-    ```
-    
-2.  **Install dependencies (only needs to be done once):**
-    ```cmd
-    pip install -r requirements.txt
-    ```
+:: Activate
+.\.venv\Scripts\activate.bat
 
-3.  **Run the application:**
-    ```cmd
-    python -m tia_tags_exporter.app
-    ```
+:: Install dependencies (once)
+pip install -r requirements.txt
+```
 
-> Ensure: Windows 10/11 x64, Python 3.12 x64, TIA Portal **V17** installed with Openness, and your user is in the **"Siemens TIA Openness"** group.
+## Running the Application
 
-## Notes
-- First run opens the **DLL Discovery & Configuration Wizard**. You can provide **priority directories**, or let it scan all fixed drives.
-- If Windows shows an **Openness access** prompt, select **"Yes to all"**.
-- The output is `PLC_Tags.xlsx` with a single sheet `PLC_Tags`.
+The recommended entry point uses the boot-first loader, which prepares Siemens Openness DLL resolution before the GUI starts:
+
+```
+python -m tia_tags_exporter.app_boot
+```
+
+Alternatively, you can launch directly (requires a configured DLL profile):
+
+```
+python -m tia_tags_exporter.app
+```
+
+## First Run
+
+On first launch the **DLL Discovery Wizard** opens automatically. It scans your drives for Siemens Openness assemblies, ranks candidates by quality, and saves a profile. You can also provide priority directories to speed up the scan.
+
+If Windows shows an **Openness access prompt**, select **"Yes to all"**.
+
+## Usage
+
+1. **Configure** — Run the DLL Wizard for V17 or V18 to locate Openness assemblies
+2. **Attach** — Click the Attach button for your TIA Portal version; the app connects to the running instance
+3. **Select devices** — Choose one or more PLCs / HMI targets from the device list
+4. **Export** — Pick an export type and output format, then export
+
+### Export Types
+
+| Export | Description | Formats |
+|---|---|---|
+| **Controller Tags** | PLC tag tables — name, data type, address, comment, retentive flag, scope | Excel, CSV, Google Sheets |
+| **Program Blocks** | Block metadata (type, language, attributes, interface) plus source code files | Excel, CSV, Google Sheets |
+| **HMI Information** | WinCC assets — text lists, screens, alarms, recipes | Raw AML/ZIP or flattened Excel |
+| **Devices & Networks** | Device names, types, network interfaces, IP addresses, subnets, IO systems | Excel, CSV, Google Sheets |
+
+## Project Structure
+
+```
+src/tia_tags_exporter/
+├── app.py                      # Main entry point (QApplication)
+├── app_boot.py                 # Boot-first loader — prepares CLR before GUI
+├── openness_bridge.py          # pythonnet CLR loading & Siemens DLL binding
+├── loader_multi.py             # Multi-directory assembly resolver
+├── session.py                  # TiaSession — attach/detach to TIA Portal
+├── discovery.py                # Drive scanning for Openness DLLs
+├── validation.py               # Candidate ranking & DLL validation
+├── config_store.py             # Profile persistence (~/.tia-tags-exporter/)
+├── settings.py                 # DllProfile & AppConfig dataclasses
+├── tag_extractor.py            # PLC tag table extraction
+├── block_exporter.py           # Program block extraction
+├── block_writer.py             # Block export to Excel/CSV/Google Sheets
+├── devices_networks_exporter.py # Device & network config extraction
+├── hmi_exporter.py             # HMI asset export (AML/XML)
+├── hmi_flatteners.py           # AML/XML → flat tables
+├── excel_writer.py             # Tag & device export writers
+├── logging_utils.py            # Logging configuration
+└── gui/
+    ├── main_window.py          # Primary application window
+    ├── dll_wizard_window.py    # DLL wizard host & tutorial
+    ├── wizard.py               # Discovery wizard dialog
+    └── hmi_export_window.py    # HMI export window
+```
+
+## Troubleshooting
+
+- **DLL resolution fails** — The boot-first loader (`app_boot.py`) sanitises PATH and installs an `AppDomain.AssemblyResolve` handler. If you still get `FileLoadException` or `TypeInitializationException`, ensure no conflicting `bin` directories appear early in your system PATH.
+- **Openness access prompt** — Select "Yes to all" when Windows asks for Openness permissions.
+- **No devices listed after attach** — Verify your TIA project is open and contains at least one PLC or HMI device.
+- **Google Sheets export** — Requires `gspread` and `google-auth` with valid Google service account credentials.
